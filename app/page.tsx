@@ -6,19 +6,78 @@ import Link from 'next/link';
 import { FranchiseCard } from '@/components/franchise-card';
 import { ExhibitionCard } from '@/components/exhibition-card';
 import { HomepageSearchBar } from '@/components/homepage-search-bar';
-import { mockFranchises, mockExhibitions } from '@/lib/mock-data';
-import { TrendingUp, Award, Users, Target } from 'lucide-react';
+import { TrendingUp, Award, Users, Target, RefreshCw } from 'lucide-react';
+import { Franchise } from '@/lib/types';
 
 export default function Home() {
-  const featuredFranchises = mockFranchises.slice(0, 3);
+  const [featuredFranchises, setFeaturedFranchises] = useState<Franchise[]>([]);
+  const [loadingFranchises, setLoadingFranchises] = useState(true);
   const [apiExhibitions, setApiExhibitions] = useState<any[]>([]);
+  const [loadingExhibitions, setLoadingExhibitions] = useState(true);
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
+    async function fetchFranchises() {
+      setLoadingFranchises(true);
+      try {
+        const res = await fetch(`${API_URL}/api/exhibitor-registrations/`);
+        if (res.ok) {
+          const data = await res.json();
+          const results = data.results || data;
+
+          const mapped: Franchise[] = (Array.isArray(results) ? results : []).map((item: any) => {
+            const investmentStr = item.investment_required || '';
+            const minMatch = investmentStr.split('-')[0]?.match(/([\d.]+)\s*(K|Lakh|Crore)/i);
+            const maxMatch = investmentStr.split('-')[1]?.match(/([\d.]+)\s*(K|Lakh|Crore)/i);
+
+            const parseVal = (match: any) => {
+              if (!match) return 0;
+              let val = parseFloat(match[1]);
+              const unit = (match[2] || '').toLowerCase();
+              if (unit === 'k') val *= 1000;
+              else if (unit === 'lakh') val *= 100000;
+              else if (unit === 'crore') val *= 10000000;
+              return val;
+            };
+
+            const minInvest = parseVal(minMatch);
+            const maxInvest = parseVal(maxMatch) || minInvest * 1.5;
+
+            return {
+              id: item.id.toString(),
+              name: item.company_name || 'Upcoming Franchise',
+              category: item.industry || 'General',
+              investmentRange: {
+                min: minInvest,
+                max: maxInvest
+              },
+              description: item.about || '',
+              shortDescription: item.product_category || '',
+              roi: item.roi || '18-25',
+              yearsInBusiness: Number(item.founded_year) ? new Date().getFullYear() - Number(item.founded_year) : 5,
+              unitsOperating: Number(item.units_operating) || 0,
+              supportLevel: 'Comprehensive',
+              image: item.logo || '',
+              highlights: ['Proven Model', 'Training Included', 'Brand Support'],
+              verified: item.status === 'paid',
+            };
+          });
+          setFeaturedFranchises(mapped.slice(0, 3));
+        }
+      } catch (err) {
+        console.error('Failed to fetch franchises:', err);
+      } finally {
+        setLoadingFranchises(false);
+      }
+    }
+
     async function fetchEvents() {
+      setLoadingExhibitions(true);
       try {
         const response = await axios.get('/api/events-proxy');
         const data = response.data;
-        
+
         if (data && data.results) {
           const events = data.results.map((item: any) => ({
             id: item.id.toString(),
@@ -26,7 +85,7 @@ export default function Home() {
             location: item.location || item.venue || 'TBA',
             date: item.start_date,
             description: item.description || 'No description available',
-            image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80',
+            image: item.image || '',
             featured: item.is_active,
             attendees: parseInt(item.buyers_count) || undefined,
             booths: parseInt(item.exhibitors_count) || undefined,
@@ -34,15 +93,19 @@ export default function Home() {
           setApiExhibitions(events);
         }
       } catch (error) {
-        console.error('Error fetching events with axios:', error);
+        console.error('Error fetching events:', error);
+      } finally {
+        setLoadingExhibitions(false);
       }
     }
-    fetchEvents();
-  }, []);
 
-  const featuredExhibitions = apiExhibitions.length > 0 
-    ? apiExhibitions.filter((e) => e.featured).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    : mockExhibitions.filter((e) => e.featured).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    fetchFranchises();
+    fetchEvents();
+  }, [API_URL]);
+
+  const featuredExhibitions = apiExhibitions.length > 0
+    ? apiExhibitions.filter((e) => e.featured).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(0, 2)
+    : []; // Show empty or handle mock logic if desired
 
   return (
     <div className="min-h-screen">
@@ -53,20 +116,15 @@ export default function Home() {
           <div className="absolute bottom-10 right-10 w-96 h-96 bg-red-400 rounded-full blur-3xl"></div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-12">
             <p className="text-sm md:text-base font-semibold text-red-200 mb-3 uppercase tracking-wide">India's Premier Franchise Ecosystem</p>
             <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight text-balance">
-              National Franchise India Summit
+              National Franchise Investment Summit
             </h1>
             <p className="text-lg md:text-xl opacity-90 text-balance max-w-3xl mx-auto">
               Connect with 500+ leading franchise brands, serious investors, and ambitious entrepreneurs. Attend our premium exhibitions across major Indian cities.
             </p>
-          </div>
-
-          {/* Search Bar */}
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl p-6 md:p-8">
-            <HomepageSearchBar />
           </div>
         </div>
       </section>
@@ -83,10 +141,21 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 mb-8">
-            {featuredFranchises.map((franchise) => (
-              <FranchiseCard key={franchise.id} franchise={franchise} />
-            ))}
+          <div className="grid md:grid-cols-3 gap-8 mb-8 min-h-[400px]">
+            {loadingFranchises ? (
+              <div className="col-span-3 flex flex-col items-center justify-center py-20">
+                <RefreshCw className="animate-spin text-red-600 mb-4" size={40} />
+                <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Accessing Franchise Network...</p>
+              </div>
+            ) : featuredFranchises.length > 0 ? (
+              featuredFranchises.map((franchise) => (
+                <FranchiseCard key={franchise.id} franchise={franchise} />
+              ))
+            ) : (
+              <div className="col-span-3 text-center py-20">
+                <p className="text-gray-500">No active exhibitors found at this time.</p>
+              </div>
+            )}
           </div>
 
           <div className="text-center">
@@ -223,13 +292,13 @@ export default function Home() {
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             <a
-              href="/register"
+              href={`${process.env.NEXT_PUBLIC_BASE_SITE_URL || 'http://localhost:3000'}/exhibition#registration-form`}
               className="px-8 py-3 bg-white text-blue-700 font-semibold rounded-lg hover:bg-gray-100 transition-all duration-200 transform hover:scale-105"
             >
               Book Exhibition Booth
             </a>
             <a
-              href="/register"
+              href={`${process.env.NEXT_PUBLIC_BASE_SITE_URL || 'http://localhost:3000'}/visitors#visitor-registration`}
               className="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-200"
             >
               Register as Visitor

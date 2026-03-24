@@ -3,19 +3,20 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
+import { Toaster } from 'sonner'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'NFIS - National Franchise India Summit',
-  description: 'Discover franchise opportunities and connect with leading franchisors. Explore businesses, exhibitions, and find your perfect franchise match.',
+  title: 'NFIS - National Franchise Investment Summit',
+  description: 'National Franchise Investment Summit (NFIS) - India\'s premier platform for franchise discovery. Secure vetted opportunities, connect with capital partners, and grow your portfolio.',
   openGraph: {
-    title: 'NFIS - Find Your Ideal Franchise',
-    description: 'Explore 600+ vetted franchise opportunities across multiple industries. Connect with franchisors and join our community of successful entrepreneurs.',
+    title: 'National Franchise Investment Summit | Connect with Leading Brands',
+    description: 'Explore 600+ vetted franchise and investment opportunities. Join the National Franchise Investment Summit (NFIS) community today.',
     url: 'https://nfis.example.com',
-    siteName: 'NFIS',
+    siteName: 'National Franchise Investment Summit',
     type: 'website',
   },
   icons: {
@@ -49,6 +50,7 @@ export default function RootLayout({
         <main>{children}</main>
         <Footer />
         <Analytics />
+        <Toaster position="top-right" expand={false} richColors />
       </body>
     </html>
   )

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Exhibition } from '@/lib/types';
-import { Calendar, MapPin, Users, Store } from 'lucide-react';
+import { Calendar, MapPin, Users, Store, Building2 } from 'lucide-react';
 
 interface ExhibitionCardProps {
   exhibition: Exhibition;
@@ -16,21 +16,37 @@ export function ExhibitionCard({ exhibition }: ExhibitionCardProps) {
     year: 'numeric',
   });
 
+  const baseSiteUrl = process.env.NEXT_PUBLIC_BASE_SITE_URL || 'http://localhost:3000';
+  const learnMoreUrl = `${baseSiteUrl}/exhibition`;
+
   return (
-    <Link href={`/exhibitions/${exhibition.id}`}>
+    <a href={learnMoreUrl} target="_blank" rel="noopener noreferrer">
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg hover:border-red-300 transition-all duration-300 h-full flex flex-col">
         {/* Image Section */}
-        <div className="relative w-full h-48 overflow-hidden bg-gray-100">
-          <Image
-            src={exhibition.image}
-            alt={exhibition.name}
-            fill
-            className="object-cover hover:scale-105 transition-transform duration-300"
-          />
-          {exhibition.featured && (
+        <div className={`relative w-full h-48 overflow-hidden bg-gray-100 ${!exhibition.featured ? 'grayscale-[0.5] opacity-90' : ''}`}>
+          {exhibition.image ? (
+            <Image
+              src={exhibition.image}
+              alt={exhibition.name}
+              fill
+              className="object-cover hover:scale-105 transition-transform duration-300"
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-gray-50 to-gray-200 border-b border-gray-100">
+               <Building2 size={40} className="text-red-600/20 mb-2" />
+               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-red-600/40 text-center px-8">National Franchise India Summit</p>
+            </div>
+          )}
+          {exhibition.featured ? (
             <div className="absolute top-3 left-3">
-              <span className="inline-block bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+              <span className="inline-block bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md">
                 Featured
+              </span>
+            </div>
+          ) : (
+            <div className="absolute top-3 left-3">
+              <span className="inline-block bg-gray-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md">
+                Completed
               </span>
             </div>
           )}
@@ -74,12 +90,12 @@ export function ExhibitionCard({ exhibition }: ExhibitionCardProps) {
             )}
           </div>
 
-          {/* View Details Button */}
-          <button className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-all duration-200">
-            View Details
-          </button>
+          {/* Learn More Button */}
+          <div className={`w-full px-4 py-2 ${exhibition.featured ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-800 hover:bg-gray-900'} text-white font-semibold rounded-lg transition-all duration-200 text-center`}>
+            {exhibition.featured ? 'Learn More' : 'Event Concluded'}
+          </div>
         </div>
       </div>
-    </Link>
+    </a>
   );
 }

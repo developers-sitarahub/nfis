@@ -1,8 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Mail, Lock, User, Building2, DollarSign, Phone, MapPin, Check } from 'lucide-react';
+import { Mail, Lock, User, Building2, DollarSign, Phone, MapPin, Check, Search, ChevronDown, X } from 'lucide-react';
+
+export const PRODUCT_CATEGORIES_BY_INDUSTRY: Record<string, string[]> = {
+  'Food & QSR': ['Fast Food', 'Fine Dining', 'Cafe/Bakery', 'Cloud Kitchen', 'Ice Cream & Desserts', 'Beverages', 'Other Food'],
+  'Health, Fitness & Wellness': ['Gym/Health Club', 'Yoga/Pilates', 'Wellness Center', 'Sports Coaching', 'Skin Care Clinic', 'Other Fitness'],
+  'Education & Training': ['Pre-school/K-12', 'Tutoring/Coaching', 'Vocational Training', 'Language School', 'Other Education'],
+  'Retail & Lifestyle': ['Apparel & Fashion', 'Supermarket/Grocery', 'Electronics', 'Home & Lifestyle', 'Cosmetics Store', 'Other Retail'],
+  'Hospitality & Stay': ['Hotels/B&B', 'Resorts', 'Travel Agency', 'Other Hospitality'],
+  'Kids & Entertainment': ['Play Centers', 'Themed Parks', 'Gaming Zones', 'Other Entertainment'],
+  'Automobile & EV': ['EV Showrooms', 'Service Centers', 'Automobile Accessories', 'Charging Stations'],
+  'Business Services': ['Cleaning/Maintenance', 'Consulting/B2B', 'Logistics/Courier', 'Healthcare Services', 'Other Services'],
+  'Home Services & Real Estate Allied': ['Interior Design', 'Pest Control', 'Facilities Management', 'Real Estate Brokerage', 'Other Home Services']
+};
 
 export default function RegisterPage() {
   const [userType, setUserType] = useState<'franchisee' | 'franchisor' | 'investor' | null>(null);
@@ -14,7 +26,7 @@ export default function RegisterPage() {
           {/* Header */}
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 text-balance">
-              Join the NFIS Community
+              Join the National Franchise Investment Summit
             </h1>
             <p className="text-xl text-gray-600 text-balance">
               Choose your role and start your franchise journey today
@@ -141,14 +153,43 @@ function FranchiseeRegistration() {
     phone: '',
     investmentBudget: '',
     industry: '',
+    category: '',
     experience: '',
     location: '',
-    password: '',
-    confirmPassword: '',
+    brands: [] as string[],
   });
+  
+  const [brandsList, setBrandsList] = useState<string[]>([]);
+  const [isBrandsLoading, setIsBrandsLoading] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [brandSearch, setBrandSearch] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchBrands = async () => {
+      setIsBrandsLoading(true);
+      try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const res = await fetch(`${API_URL}/api/exhibitor-registrations/`);
+        if (res.ok) {
+          const data = await res.json();
+          const results = data.results || data;
+          const names = Array.isArray(results) 
+            ? results.map((r: any) => r.company_name).filter(Boolean)
+            : [];
+          setBrandsList(Array.from(new Set(names)));
+        }
+      } catch (err) {
+        console.error('Failed to fetch brands:', err);
+      } finally {
+        setIsBrandsLoading(false);
+      }
+    };
+    fetchBrands();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
@@ -157,8 +198,9 @@ function FranchiseeRegistration() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     const newErrors: Record<string, string> = {};
 
     if (!formData.firstName) newErrors.firstName = 'First name is required';
@@ -167,13 +209,53 @@ function FranchiseeRegistration() {
     if (!formData.phone) newErrors.phone = 'Phone is required';
     if (!formData.investmentBudget) newErrors.investmentBudget = 'Investment budget is required';
     if (!formData.industry) newErrors.industry = 'Preferred industry is required';
-    if (!formData.password) newErrors.password = 'Password is required';
-    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
 
-    if (Object.keys(newErrors).length === 0) {
-      setSubmitted(true);
-    } else {
+    if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      console.log('Sending registration request to:', `${API_URL}/api/register/`);
+      const response = await fetch(`${API_URL}/api/register/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          account_type: 'franchisee',
+          email: formData.email,
+          username: formData.email,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          phone: formData.phone,
+          contact_number: formData.phone,
+          investment_budget: formData.investmentBudget,
+          industry: formData.industry,
+          product_category: formData.category,
+          experience: formData.experience,
+          location: formData.location,
+          interested_brands: formData.brands.join(', '),
+          source_platform: 'NFIS',
+        }),
+      });
+
+      if (response.ok) {
+        setSubmitted(true);
+      } else {
+        const errorData = await response.json();
+        const errorMsg = Object.entries(errorData)
+          .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(', ') : val}`)
+          .join('\n');
+        alert(errorMsg || 'Registration failed. Please ensure all details are correct.');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      alert('Network error occurred during registration.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -184,9 +266,9 @@ function FranchiseeRegistration() {
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <Check size={32} className="text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Registration Successful!</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Application Submitted!</h2>
           <p className="text-gray-600 mb-6">
-            Welcome to NFIS. Check your email to verify your account and start exploring franchise opportunities.
+            Thank you for applying. Our team will review your application and contact you soon.
           </p>
           <Link
             href="/franchises"
@@ -314,11 +396,11 @@ function FranchiseeRegistration() {
                   }`}
                 >
                   <option value="">Select your budget range</option>
-                  <option value="25-50">$25,000 - $50,000</option>
-                  <option value="50-100">$50,000 - $100,000</option>
-                  <option value="100-250">$100,000 - $250,000</option>
-                  <option value="250-500">$250,000 - $500,000</option>
-                  <option value="500+">$500,000+</option>
+                  <option value="₹25 Lakhs - ₹50 Lakhs">₹25 Lakhs - ₹50 Lakhs</option>
+                  <option value="₹50 Lakhs - ₹1 Crore">₹50 Lakhs - ₹1 Crore</option>
+                  <option value="₹1 Crore - ₹2.5 Crores">₹1 Crore - ₹2.5 Crores</option>
+                  <option value="₹2.5 Crores - ₹5 Crores">₹2.5 Crores - ₹5 Crores</option>
+                  <option value="₹5 Crores+">₹5 Crores+</option>
                 </select>
                 {errors.investmentBudget && <p className="text-red-500 text-sm mt-1">{errors.investmentBudget}</p>}
               </div>
@@ -357,14 +439,28 @@ function FranchiseeRegistration() {
                   }`}
                 >
                   <option value="">Select an industry</option>
-                  <option value="food">Food & Beverage</option>
-                  <option value="fitness">Fitness & Wellness</option>
-                  <option value="education">Education</option>
-                  <option value="beauty">Beauty & Personal Care</option>
-                  <option value="retail">Retail</option>
-                  <option value="services">Services</option>
+                  {Object.keys(PRODUCT_CATEGORIES_BY_INDUSTRY).map(ind => (
+                    <option key={ind} value={ind}>{ind}</option>
+                  ))}
                 </select>
                 {errors.industry && <p className="text-red-500 text-sm mt-1">{errors.industry}</p>}
+              </div>
+              <div>
+                <label htmlFor="category" className="block text-sm font-medium text-gray-900 mb-2">
+                  Preferred Category
+                </label>
+                <select
+                  name="category"
+                  id="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-all"
+                >
+                  <option value="">Select a category</option>
+                  {(PRODUCT_CATEGORIES_BY_INDUSTRY[formData.industry] || []).map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label htmlFor="experience" className="block text-sm font-medium text-gray-900 mb-2">
@@ -385,47 +481,83 @@ function FranchiseeRegistration() {
               </div>
             </div>
 
-            {/* Passwords */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-900 mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock size={18} className="absolute left-3 top-3 text-gray-400" />
-                  <input
-                    type="password"
-                    name="password"
-                    id="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-all ${
-                      errors.password ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="••••••••"
-                  />
+            {/* Brands Multi-Select Dropdown */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-900 mb-2 font-bold text-red-600">Interested Brands (Select one or more)</label>
+              <div className="relative">
+                <div 
+                  className="min-h-[50px] w-full px-5 py-3 border-2 border-gray-100 rounded-2xl focus-within:ring-4 focus-within:ring-red-500/10 focus-within:border-red-500 cursor-pointer bg-white flex flex-wrap gap-2 items-center transition-all shadow-sm"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                >
+                  {(formData.brands || []).length === 0 ? (
+                    <span className="text-gray-400 font-medium italic">Search for brands you're interested in...</span>
+                  ) : (
+                    (formData.brands || []).map(brand => (
+                      <span key={brand} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-700 text-xs font-black rounded-xl border border-red-100 shadow-sm">
+                        {brand}
+                        <button 
+                          type="button" 
+                          onClick={(e) => { e.stopPropagation(); setFormData({...formData, brands: (formData.brands || []).filter(b => b !== brand)}); }}
+                          className="hover:text-red-950 transition-colors p-0.5 rounded-full hover:bg-red-100"
+                        >
+                          <X size={12} strokeWidth={3} />
+                        </button>
+                      </span>
+                    ))
+                  )}
+                  <ChevronDown className={`ml-auto text-gray-400 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180 text-red-600' : ''}`} size={20} />
                 </div>
-                {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-              </div>
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-900 mb-2">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <Lock size={18} className="absolute left-3 top-3 text-gray-400" />
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    id="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-all ${
-                      errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="••••••••"
-                  />
-                </div>
-                {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
+
+                {isDropdownOpen && (
+                  <div className="absolute z-50 w-full mt-3 bg-white border border-gray-100 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in slide-in-from-top-2 duration-300">
+                    <div className="p-4 border-b border-gray-50 bg-gray-50/50">
+                      <div className="relative group">
+                        <Search className="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-red-600 transition-colors" size={18} />
+                        <input 
+                          type="text"
+                          placeholder="Type brand name to search..."
+                          className="w-full pl-11 pr-5 py-3.5 text-sm border-gray-200 rounded-2xl focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all font-semibold"
+                          value={brandSearch}
+                          onChange={(e) => setBrandSearch(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-72 overflow-y-auto custom-scrollbar p-2">
+                      {isBrandsLoading ? (
+                        <div className="p-10 text-center text-gray-400 text-sm font-black uppercase tracking-widest flex flex-col items-center gap-4">
+                           <div className="w-8 h-8 border-4 border-red-600/20 border-t-red-600 rounded-full animate-spin"></div>
+                           Gathering Brands...
+                        </div>
+                      ) : (brandsList || []).filter(b => b.toLowerCase().includes(brandSearch.toLowerCase())).length === 0 ? (
+                        <div className="p-10 text-center text-gray-500 text-sm font-bold italic">No brands found matching "{brandSearch}"</div>
+                      ) : (
+                        (brandsList || [])
+                          .filter(b => b.toLowerCase().includes(brandSearch.toLowerCase()))
+                          .map(brand => (
+                            <div 
+                              key={brand}
+                              className={`px-5 py-4 text-sm cursor-pointer hover:bg-gray-50 rounded-2xl transition-all flex items-center justify-between mb-1 last:mb-0 ${formData.brands.includes(brand) ? 'bg-red-50 font-black text-red-700' : 'text-gray-700 font-semibold'}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const newBrands = formData.brands.includes(brand)
+                                  ? formData.brands.filter(b => b !== brand)
+                                  : [...formData.brands, brand];
+                                setFormData({...formData, brands: newBrands});
+                              }}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className={`w-3 h-3 rounded-full border-2 transition-all ${formData.brands.includes(brand) ? 'bg-red-600 border-red-600' : 'bg-transparent border-gray-200'}`}></div>
+                                {brand}
+                              </div>
+                              {formData.brands.includes(brand) && <Check size={20} strokeWidth={3} className="text-red-600" />}
+                            </div>
+                          ))
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -434,16 +566,8 @@ function FranchiseeRegistration() {
               type="submit"
               className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-105"
             >
-              Create Franchisee Account
+              Submit Franchisee Application
             </button>
-
-            {/* Sign In Link */}
-            <p className="text-center text-gray-600">
-              Already have an account?{' '}
-              <Link href="/login" className="text-red-600 hover:text-red-700 font-semibold">
-                Sign In
-              </Link>
-            </p>
           </form>
         </div>
       </div>
@@ -459,15 +583,18 @@ function FranchisorRegistration() {
     email: '',
     phone: '',
     industry: '',
+    productCategory: '',
     foundedYear: '',
     unitsOperating: '',
     investmentRequired: '',
+    description: '',
     password: '',
     confirmPassword: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
@@ -476,8 +603,9 @@ function FranchisorRegistration() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     const newErrors: Record<string, string> = {};
 
     if (!formData.companyName) newErrors.companyName = 'Company name is required';
@@ -487,13 +615,58 @@ function FranchisorRegistration() {
     if (!formData.phone) newErrors.phone = 'Phone is required';
     if (!formData.industry) newErrors.industry = 'Industry is required';
     if (!formData.foundedYear) newErrors.foundedYear = 'Founded year is required';
+    if (!formData.description) newErrors.description = 'Company description is required';
     if (!formData.password) newErrors.password = 'Password is required';
     if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
 
-    if (Object.keys(newErrors).length === 0) {
-      setSubmitted(true);
-    } else {
+    if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${API_URL}/api/register/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          account_type: 'franchisor',
+          email: formData.email,
+          username: formData.email, // backend usually expects a username
+          password: formData.password,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          // Extra profile data
+          company_name: formData.companyName,
+          contact_person_name: `${formData.firstName} ${formData.lastName}`.trim(),
+          contact_number: formData.phone,
+          industry: formData.industry,
+          product_category: formData.productCategory,
+          about: formData.description,
+          founded_year: formData.foundedYear,
+          units_operating: formData.unitsOperating,
+          investment_required: formData.investmentRequired,
+          source_platform: 'NFIS',
+        }),
+      });
+
+      if (response.ok) {
+        setSubmitted(true);
+      } else {
+        const errorData = await response.json();
+        const errorMsg = Object.entries(errorData)
+          .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(', ') : val}`)
+          .join('\n');
+        alert(errorMsg || 'Registration failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      alert('An error occurred during registration.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -656,21 +829,37 @@ function FranchisorRegistration() {
                   }`}
                 >
                   <option value="">Select an industry</option>
-                  <option value="food">Food & Beverage</option>
-                  <option value="fitness">Fitness & Wellness</option>
-                  <option value="education">Education</option>
-                  <option value="beauty">Beauty & Personal Care</option>
-                  <option value="retail">Retail</option>
-                  <option value="services">Services</option>
+                  {Object.keys(PRODUCT_CATEGORIES_BY_INDUSTRY).map(ind => (
+                    <option key={ind} value={ind}>{ind}</option>
+                  ))}
                 </select>
                 {errors.industry && <p className="text-red-500 text-sm mt-1">{errors.industry}</p>}
               </div>
+
+              <div>
+                <label htmlFor="productCategory" className="block text-sm font-medium text-gray-900 mb-2">
+                  Product/Category
+                </label>
+                <select
+                  name="productCategory"
+                  id="productCategory"
+                  value={formData.productCategory}
+                  onChange={handleChange}
+                  disabled={!formData.industry}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all disabled:opacity-50 disabled:bg-gray-50"
+                >
+                  <option value="">{formData.industry ? 'Select a category' : 'Select Industry First'}</option>
+                  {(PRODUCT_CATEGORIES_BY_INDUSTRY[formData.industry] || []).map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
               <div>
                 <label htmlFor="foundedYear" className="block text-sm font-medium text-gray-900 mb-2">
                   Year Founded
                 </label>
-                <input
-                  type="number"
+                <select
                   name="foundedYear"
                   id="foundedYear"
                   value={formData.foundedYear}
@@ -678,12 +867,33 @@ function FranchisorRegistration() {
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all ${
                     errors.foundedYear ? 'border-red-500' : 'border-gray-300'
                   }`}
-                  placeholder="2020"
-                  min="1900"
-                  max={new Date().getFullYear()}
-                />
+                >
+                  <option value="">Select year</option>
+                  {Array.from({ length: 75 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
                 {errors.foundedYear && <p className="text-red-500 text-sm mt-1">{errors.foundedYear}</p>}
               </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-900 mb-2">
+                About Your Company
+              </label>
+              <textarea
+                name="description"
+                id="description"
+                rows={4}
+                value={formData.description}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all ${
+                  errors.description ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Briefly describe your franchise opportunity..."
+              />
+              {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
             </div>
 
             {/* Units and Investment */}
@@ -705,17 +915,49 @@ function FranchisorRegistration() {
               </div>
               <div>
                 <label htmlFor="investmentRequired" className="block text-sm font-medium text-gray-900 mb-2">
-                  Investment Required (USD)
+                  Investment Required (INR)
                 </label>
-                <input
-                  type="text"
-                  name="investmentRequired"
-                  id="investmentRequired"
-                  value={formData.investmentRequired}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
-                  placeholder="$100,000"
-                />
+                <div className="flex items-center gap-1 sm:gap-2 w-full px-4 py-[0.55rem] border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-600 focus-within:border-transparent transition-all bg-white">
+                  <span className="text-gray-500 font-bold">₹</span>
+                  <input type="number" placeholder="10" className="w-8 sm:w-12 bg-transparent outline-none text-gray-900 font-semibold no-spinners" 
+                    onChange={(e) => {
+                      const currentParts = (formData.investmentRequired || '₹0 Lakh - ₹0 Lakh').split(' - ');
+                      const minUnit = currentParts[0]?.match(/(K|Lakh|Crore)/i)?.[0] || 'Lakh';
+                      setFormData({...formData, investmentRequired: `₹${e.target.value} ${minUnit} - ${currentParts[1] || '₹0 Lakh'}`});
+                    }} 
+                    value={(formData.investmentRequired || '').split(' - ')[0]?.match(/₹?([\d.]+)/)?.[1] || ''} 
+                  />
+                  <select className="bg-transparent outline-none text-gray-600 font-semibold appearance-none cursor-pointer" 
+                    onChange={(e) => {
+                      const currentParts = (formData.investmentRequired || '₹0 Lakh - ₹0 Lakh').split(' - ');
+                      const minNum = currentParts[0]?.match(/₹?([\d.]+)/)?.[1] || '0';
+                      setFormData({...formData, investmentRequired: `₹${minNum} ${e.target.value} - ${currentParts[1] || '₹0 Lakh'}`});
+                    }} 
+                    value={(formData.investmentRequired || '').split(' - ')[0]?.match(/(K|Lakh|Crore)/i)?.[0] || 'Lakh'}
+                  >
+                    <option value="K">K</option><option value="Lakh">Lakh</option><option value="Crore">Crore</option>
+                  </select>
+                  <span className="text-gray-400 font-black">-</span>
+                  <span className="text-gray-500 font-bold">₹</span>
+                  <input type="number" placeholder="50" className="w-8 sm:w-12 bg-transparent outline-none text-gray-900 font-semibold no-spinners" 
+                    onChange={(e) => {
+                      const currentParts = (formData.investmentRequired || '₹0 Lakh - ₹0 Lakh').split(' - ');
+                      const maxUnit = currentParts[1]?.match(/(K|Lakh|Crore)/i)?.[0] || 'Lakh';
+                      setFormData({...formData, investmentRequired: `${currentParts[0] || '₹0 Lakh'} - ₹${e.target.value} ${maxUnit}`});
+                    }} 
+                    value={(formData.investmentRequired || '').split(' - ')[1]?.match(/₹?([\d.]+)/)?.[1] || ''} 
+                  />
+                  <select className="bg-transparent outline-none text-gray-600 font-semibold appearance-none cursor-pointer"
+                    onChange={(e) => {
+                      const currentParts = (formData.investmentRequired || '₹0 Lakh - ₹0 Lakh').split(' - ');
+                      const maxNum = currentParts[1]?.match(/₹?([\d.]+)/)?.[1] || '0';
+                      setFormData({...formData, investmentRequired: `${currentParts[0] || '₹0 Lakh'} - ₹${maxNum} ${e.target.value}`});
+                    }} 
+                    value={(formData.investmentRequired || '').split(' - ')[1]?.match(/(K|Lakh|Crore)/i)?.[0] || 'Lakh'}
+                  >
+                    <option value="K">K</option><option value="Lakh">Lakh</option><option value="Crore">Crore</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -766,9 +1008,15 @@ function FranchisorRegistration() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-105"
+              disabled={isLoading}
+              className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center font-bold"
             >
-              Create Franchisor Account
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                  Creating Account...
+                </>
+              ) : 'Create Franchisor Account'}
             </button>
 
             {/* Sign In Link */}
@@ -789,19 +1037,24 @@ function InvestorRegistration() {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
+    firmName: '',
+    firmLogo: '',
     email: '',
     phone: '',
     investmentCapacity: '',
     preferredIndustries: [] as string[],
+    companiesFinanced: '',
     experience: '',
+    description: '',
     password: '',
     confirmPassword: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const industries = ['Food & Beverage', 'Fitness & Wellness', 'Education', 'Beauty & Personal Care', 'Retail', 'Technology Services'];
+  const industries = Object.keys(PRODUCT_CATEGORIES_BY_INDUSTRY);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
@@ -819,8 +1072,9 @@ function InvestorRegistration() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     const newErrors: Record<string, string> = {};
 
     if (!formData.firstName) newErrors.firstName = 'First name is required';
@@ -831,10 +1085,54 @@ function InvestorRegistration() {
     if (!formData.password) newErrors.password = 'Password is required';
     if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
 
-    if (Object.keys(newErrors).length === 0) {
-      setSubmitted(true);
-    } else {
+    if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${API_URL}/api/register/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          account_type: 'investor',
+          email: formData.email,
+          username: formData.email,
+          password: formData.password,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          firm_name: formData.firmName,
+          firm_logo: formData.firmLogo,
+          // Extra profile data
+          contact_person_name: `${formData.firstName} ${formData.lastName}`.trim(),
+          contact_number: formData.phone,
+          investment_budget: formData.investmentCapacity,
+          interested_sector: formData.preferredIndustries.join(', '),
+          about: formData.description,
+          experience: formData.experience,
+          companies_financed: formData.companiesFinanced,
+          source_platform: 'NFIS',
+        }),
+      });
+
+      if (response.ok) {
+        setSubmitted(true);
+      } else {
+        const errorData = await response.json();
+        const errorMsg = Object.entries(errorData)
+          .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(', ') : val}`)
+          .join('\n');
+        alert(errorMsg || 'Registration failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      alert('An error occurred during registration.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -915,6 +1213,43 @@ function InvestorRegistration() {
               </div>
             </div>
 
+            {/* Firm Name */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="firmName" className="block text-sm font-medium text-gray-900 mb-2">
+                  Firm Name (Optional)
+                </label>
+                <div className="relative">
+                  <Building2 size={18} className="absolute left-3 top-3 text-gray-400" />
+                  <input
+                    type="text"
+                    name="firmName"
+                    id="firmName"
+                    value={formData.firmName}
+                    onChange={handleChange}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent transition-all"
+                    placeholder="e.g. Acme Capital"
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="firmLogo" className="block text-sm font-medium text-gray-900 mb-2">
+                  Firm Logo Link (Optional)
+                </label>
+                <div className="relative">
+                  <input
+                    type="url"
+                    name="firmLogo"
+                    id="firmLogo"
+                    value={formData.firmLogo}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent transition-all"
+                    placeholder="https://example.com/logo.png"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Email and Phone */}
             <div className="grid md:grid-cols-2 gap-4">
               <div>
@@ -974,11 +1309,11 @@ function InvestorRegistration() {
                 }`}
               >
                 <option value="">Select your investment capacity</option>
-                <option value="50-100">$50,000 - $100,000</option>
-                <option value="100-250">$100,000 - $250,000</option>
-                <option value="250-500">$250,000 - $500,000</option>
-                <option value="500-1000">$500,000 - $1,000,000</option>
-                <option value="1000+">$1,000,000+</option>
+                <option value="₹50 Lakhs - ₹1 Crore">₹50 Lakhs - ₹1 Crore</option>
+                <option value="₹1 Crore - ₹2.5 Crores">₹1 Crore - ₹2.5 Crores</option>
+                <option value="₹2.5 Crores - ₹5 Crores">₹2.5 Crores - ₹5 Crores</option>
+                <option value="₹5 Crores - ₹10 Crores">₹5 Crores - ₹10 Crores</option>
+                <option value="₹10 Crores+">₹10 Crores+</option>
               </select>
               {errors.investmentCapacity && <p className="text-red-500 text-sm mt-1">{errors.investmentCapacity}</p>}
             </div>
@@ -1001,24 +1336,57 @@ function InvestorRegistration() {
               </div>
             </div>
 
-            {/* Experience */}
+            {/* Description */}
             <div>
-              <label htmlFor="experience" className="block text-sm font-medium text-gray-900 mb-2">
-                Investment Experience
+              <label htmlFor="description" className="block text-sm font-medium text-gray-900 mb-2">
+                About Your Investor Profile
               </label>
-              <select
-                name="experience"
-                id="experience"
-                value={formData.experience}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent transition-all"
-              >
-                <option value="">Select your experience level</option>
-                <option value="beginner">Beginner</option>
-                <option value="intermediate">Intermediate</option>
-                <option value="experienced">Experienced</option>
-                <option value="very-experienced">Very Experienced</option>
-              </select>
+              <textarea
+                name="description"
+                id="description"
+                rows={4}
+                value={formData.description}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent transition-all ${
+                  errors.description ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Tell us about your investment philosophy and what kind of brands you're looking for..."
+              />
+              {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+            </div>
+
+            {/* Experience and Companies Financed */}
+            <div className="grid md:grid-cols-2 gap-4">
+               <div>
+                  <label htmlFor="experience" className="block text-sm font-medium text-gray-900 mb-2">
+                     Business Experience (Years)
+                  </label>
+                  <input
+                     type="number"
+                     name="experience"
+                     id="experience"
+                     min="0"
+                     value={formData.experience}
+                     onChange={handleChange}
+                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent transition-all"
+                     placeholder="e.g. 5"
+                  />
+               </div>
+               <div>
+                  <label htmlFor="companiesFinanced" className="block text-sm font-medium text-gray-900 mb-2">
+                     Number of Companies Financed
+                  </label>
+                  <input
+                     type="number"
+                     name="companiesFinanced"
+                     id="companiesFinanced"
+                     min="0"
+                     value={formData.companiesFinanced}
+                     onChange={handleChange}
+                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent transition-all"
+                     placeholder="e.g. 12"
+                  />
+               </div>
             </div>
 
             {/* Passwords */}
@@ -1068,9 +1436,15 @@ function InvestorRegistration() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-105"
+              disabled={isLoading}
+              className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center font-bold"
             >
-              Create Investor Account
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                  Creating Account...
+                </>
+              ) : 'Create Investor Account'}
             </button>
 
             {/* Sign In Link */}

@@ -10,6 +10,7 @@ export function Navbar() {
   const links = [
     { href: '/', label: 'Home' },
     { href: '/franchises', label: 'Franchises' },
+    { href: '/investors', label: 'Investors' },
     { href: '/exhibitions', label: 'Exhibitions' },
     { href: '/about', label: 'About' },
     { href: '/contact', label: 'Contact' },
@@ -24,8 +25,8 @@ export function Navbar() {
               <span className="text-white font-bold text-xs">NFIS</span>
             </div>
             <div className="hidden sm:block">
-              <p className="font-bold text-gray-900 text-xs">NFIS</p>
-              <p className="text-xs text-gray-600 leading-tight">National Franchise India Summit</p>
+              <p className="font-bold text-gray-900 text-xs text-nowrap">NFIS</p>
+              <p className="text-[10px] text-gray-600 leading-tight uppercase font-medium tracking-tighter opacity-80">National Franchise Investment Summit</p>
             </div>
           </Link>
 

@@ -83,7 +83,7 @@ export default function ContactPage() {
             </div>
             <div className="p-6 pt-0">
               <p className="text-gray-600">Call us during business hours</p>
-              <p className="font-semibold text-foreground mt-2">1-800-NFIS-123</p>
+              <p className="font-semibold text-foreground mt-2">+91 98205 31096</p>
             </div>
           </div>
 
@@ -96,7 +96,7 @@ export default function ContactPage() {
             </div>
             <div className="p-6 pt-0">
               <p className="text-gray-600">Visit our headquarters</p>
-              <p className="font-semibold text-foreground mt-2">New York, NY 10001</p>
+              <p className="font-semibold text-foreground mt-2">Mumbai, Maharashtra, India</p>
             </div>
           </div>
         </div>
@@ -154,7 +154,7 @@ export default function ContactPage() {
                   <input
                     id="phone"
                     type="tel"
-                    placeholder="+1 (555) 000-0000"
+                    placeholder="+91 98205 31096"
                     {...register('phone')}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-1"
                   />
@@ -173,12 +173,15 @@ export default function ContactPage() {
                     className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-1"
                   >
                     <option value="">Select a business type</option>
-                    <option value="food-beverage">Food & Beverage</option>
-                    <option value="fitness">Fitness & Wellness</option>
-                    <option value="education">Education</option>
-                    <option value="beauty">Beauty & Personal Care</option>
-                    <option value="retail">Retail</option>
-                    <option value="technology">Technology Services</option>
+                    <option value="Food & QSR">Food & QSR</option>
+                    <option value="Health, Fitness & Wellness">Health, Fitness & Wellness</option>
+                    <option value="Education & Training">Education & Training</option>
+                    <option value="Retail & Lifestyle">Retail & Lifestyle</option>
+                    <option value="Hospitality & Stay">Hospitality & Stay</option>
+                    <option value="Kids & Entertainment">Kids & Entertainment</option>
+                    <option value="Automobile & EV">Automobile & EV</option>
+                    <option value="Business Services">Business Services</option>
+                    <option value="Home Services & Real Estate Allied">Home Services & Real Estate Allied</option>
                     <option value="other">Other</option>
                   </select>
                 </div>

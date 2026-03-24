@@ -13,9 +13,9 @@ export default function AboutPage() {
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
-            <h1 className="text-5xl md:text-6xl font-bold mb-4 text-balance">About NFIS</h1>
-            <p className="text-xl md:text-2xl opacity-90 mb-2 text-balance">India's Premier Franchise Exhibition Platform</p>
-            <p className="text-lg opacity-80 max-w-3xl mx-auto text-balance">Connecting franchisors, investors, and entrepreneurs through world-class exhibitions and networking events</p>
+            <h1 className="text-5xl md:text-6xl font-bold mb-4 text-balance uppercase tracking-tight">National Franchise Investment Summit</h1>
+            <p className="text-xl md:text-2xl opacity-90 mb-2 text-balance font-medium">India's Premier Capital & Franchise Networking Platform</p>
+            <p className="text-lg opacity-80 max-w-3xl mx-auto text-balance">The National Franchise Investment Summit (NFIS) connects world-class franchisors with strategic capital partners and ambitious entrepreneurs.</p>
           </div>
         </div>
       </section>
@@ -27,7 +27,7 @@ export default function AboutPage() {
             <div>
               <h2 className="text-4xl font-bold text-gray-900 mb-6">Our Mission</h2>
               <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                At NFIS, we believe in the power of face-to-face connections to create transformative business opportunities. Our mission is to serve as the bridge connecting ambitious entrepreneurs with established franchise brands and investor networks.
+                At the National Franchise Investment Summit (NFIS), we believe in the power of face-to-face connections to create transformative business opportunities. Our mission is to serve as the bridge connecting ambitious entrepreneurs with established franchise brands and high-net-worth investor networks.
               </p>
               <p className="text-lg text-gray-600 leading-relaxed">
                 Through premium franchise exhibitions across India, we facilitate meaningful conversations, accelerate deal-making, and empower the next generation of franchise business owners.

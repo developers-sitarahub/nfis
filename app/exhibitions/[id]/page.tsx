@@ -63,7 +63,7 @@ export default function ExhibitionDetailsPage({ params }: { params: Promise<{ id
         <div className="absolute inset-0 z-0">
           <Image
             src={defaultImage}
-            alt={event.title}
+            alt={event.title || 'Exhibition Image'}
             fill
             className="object-cover"
             priority

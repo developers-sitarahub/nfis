@@ -1,4 +1,4 @@
-import { Franchise, Exhibition } from './types';
+import { Franchise, Exhibition, Investor } from './types';
 
 export const mockFranchises: Franchise[] = [
   {
@@ -159,5 +159,52 @@ export const mockExhibitions: Exhibition[] = [
     featured: false,
     attendees: 800,
     booths: 60,
+  },
+];
+
+export const mockInvestors: Investor[] = [
+  {
+    id: '1',
+    name: 'Rajinder Kumar',
+    location: 'Mumbai, India',
+    investmentCapacity: '₹50L - ₹1Cr',
+    preferredIndustries: ['Food & Beverage', 'Retail'],
+    experience: 'Multi-unit Franchisee',
+    description: 'Experienced entrepreneur looking to diversify into the quick-service restaurant space in Tier-1 cities.',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+    verified: true,
+  },
+  {
+    id: '2',
+    name: 'Anita Sharma',
+    location: 'Delhi NCR, India',
+    investmentCapacity: '₹20L - ₹50L',
+    preferredIndustries: ['Education', 'Wellness'],
+    experience: 'Former Educator',
+    description: 'Passionate about educational technology and wellness programs for children. Seeking scalable models.',
+    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80',
+    verified: true,
+  },
+  {
+    id: '3',
+    name: 'Vikram Singh',
+    location: 'Bangalore, India',
+    investmentCapacity: '₹1Cr+',
+    preferredIndustries: ['Technology Services', 'Automotive'],
+    experience: 'Serial Entrepreneur',
+    description: 'Tech-focused investor looking for high-growth service models with strong digital infrastructure.',
+    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80',
+    verified: true,
+  },
+  {
+    id: '4',
+    name: 'Priya Iyer',
+    location: 'Chennai, India',
+    investmentCapacity: '₹10L - ₹20L',
+    preferredIndustries: ['Beauty & Personal Care'],
+    experience: 'Business Manager',
+    description: 'Looking to start a boutique salon or spa. Interested in premium global brands entered the Indian market.',
+    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80',
+    verified: false,
   },
 ];

@@ -8,7 +8,7 @@ export interface Franchise {
   };
   description: string;
   shortDescription: string;
-  roi: number;
+  roi: string | number;
   yearsInBusiness: number;
   unitsOperating: number;
   supportLevel: string;
@@ -16,6 +16,7 @@ export interface Franchise {
   logo?: string;
   website?: string;
   highlights: string[];
+  verified?: boolean;
 }
 
 export interface Exhibition {
@@ -37,4 +38,17 @@ export interface ContactForm {
   businessType?: string;
   investmentCapacity?: string;
   message: string;
+}
+
+export interface Investor {
+  id: string;
+  name: string;
+  location: string;
+  investmentCapacity: string;
+  preferredIndustries: string[];
+  experience: string;
+  description: string;
+  image: string;
+  verified: boolean;
+  firmName?: string;
 }

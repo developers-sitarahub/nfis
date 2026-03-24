@@ -16,7 +16,7 @@ export function Footer() {
               </div>
               <div>
                 <p className="font-bold text-sm">NFIS</p>
-                <p className="text-xs text-gray-400">National Franchise India Summit</p>
+                <p className="text-xs text-gray-400">National Franchise Investment Summit</p>
               </div>
             </div>
             <p className="text-sm text-gray-400 leading-relaxed">
@@ -88,11 +88,11 @@ export function Footer() {
               </div>
               <div className="flex gap-2">
                 <Phone size={16} className="flex-shrink-0 mt-0.5 text-red-400" />
-                <span className="text-gray-400">1-800-NFIS-123</span>
+                <span className="text-gray-400">+91 98205 31096</span>
               </div>
               <div className="flex gap-2">
                 <MapPin size={16} className="flex-shrink-0 mt-0.5 text-red-400" />
-                <span className="text-gray-400">New Delhi, India</span>
+                <span className="text-gray-400">Mumbai, Maharashtra, India</span>
               </div>
             </div>
           </div>
@@ -100,7 +100,7 @@ export function Footer() {
 
         {/* Social Links and Copyright */}
         <div className="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-sm text-gray-500">&copy; 2026 NFIS - National Franchise India Summit. All rights reserved.</p>
+          <p className="text-sm text-gray-500">&copy; 2026 NFIS - National Franchise Investment Summit. All rights reserved.</p>
           <div className="flex gap-4 mt-4 md:mt-0">
             <a href="#" className="text-gray-400 hover:text-red-400 transition-colors">
               <Linkedin size={20} />
