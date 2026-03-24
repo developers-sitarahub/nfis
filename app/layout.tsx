@@ -10,14 +10,45 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'NFIS - National Franchise Investment Summit',
-  description: 'National Franchise Investment Summit (NFIS) - India\'s premier platform for franchise discovery. Secure vetted opportunities, connect with capital partners, and grow your portfolio.',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_SITE_URL || 'http://localhost:3000'),
+  title: {
+    default: 'National Franchise Investment Summit | NFIS India',
+    template: '%s | NFIS'
+  },
+  description: 'National Franchise Investment Summit (NFIS) - India\'s premier platform for franchise discovery. Secure vetted opportunities, connect with capital partners, and grow your portfolio across 600+ brands.',
+  keywords: ['Franchise India', 'Investment Summit', 'Business Opportunities', 'Franchise Expo', 'NFIS', 'Capital Network', 'Franchise Growth'],
+  authors: [{ name: 'NFIS Team' }],
+  creator: 'National Franchise Investment Summit',
+  publisher: 'National Franchise Investment Summit',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
   openGraph: {
-    title: 'National Franchise Investment Summit | Connect with Leading Brands',
-    description: 'Explore 600+ vetted franchise and investment opportunities. Join the National Franchise Investment Summit (NFIS) community today.',
-    url: 'https://nfis.example.com',
+    title: 'National Franchise Investment Summit | Connect with 600+ Leading Brands',
+    description: 'Explore vetted franchise and investment opportunities. Join India\'s premier franchise ecosystem at NFIS.',
+    url: '/',
     siteName: 'National Franchise Investment Summit',
+    locale: 'en_IN',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'National Franchise Investment Summit | NFIS',
+    description: 'India\'s premier platform for franchise discovery and investment.',
+    creator: '@NFIS_India',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
   icons: {
     icon: [

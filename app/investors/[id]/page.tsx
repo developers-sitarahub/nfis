@@ -1,3 +1,4 @@
+import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, User, MapPin, Briefcase, IndianRupee, ShieldCheck, CheckCircle, Users } from 'lucide-react';
@@ -5,6 +6,31 @@ import { notFound } from 'next/navigation';
 
 interface InvestorDetailPageProps {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: InvestorDetailPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  
+  try {
+    const res = await fetch(`${API_URL}/api/investor-registrations/${id}/`);
+    if (res.ok) {
+      const item = await res.json();
+      const name = item.firm_name || item.full_name || 'Strategic Investor';
+      const location = item.preferred_location || 'India';
+      return {
+        title: `${name} | Investor Profile - Capital Network`,
+        description: `Strategic investor profile for ${name}. Interested in ${item.interested_sector}. Part of the National Franchise Investment Summit capital network in ${location}.`,
+        openGraph: {
+          title: `Capital Network: Investor Profile - ${name}`,
+          description: `Investment capacity: ${item.investment_budget}. Discover strategic partnership opportunities with ${name}.`,
+          images:  item.logo ? [{ url: item.logo }] : [],
+        }
+      };
+    }
+  } catch (e) {}
+
+  return { title: 'Investor Profile | Capital Network' };
 }
 
 export default async function InvestorDetailPage({ params }: InvestorDetailPageProps) {

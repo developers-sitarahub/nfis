@@ -1,5 +1,11 @@
 import Link from 'next/link';
 import { Calendar, Users, MapPin, Handshake, Star, TrendingUp, CheckCircle, Zap } from 'lucide-react';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'About Us | National Franchise Investment Summit',
+  description: 'Learn about NFIS, India\'s premier platform connecting world-class franchisors with strategic capital partners and ambitious entrepreneurs.',
+};
 
 export default function AboutPage() {
   return (

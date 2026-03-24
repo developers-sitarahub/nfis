@@ -1,3 +1,4 @@
+import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, TrendingUp, Users, Target, Award, CheckCircle, Store } from 'lucide-react';
@@ -5,6 +6,31 @@ import { notFound } from 'next/navigation';
 
 interface FranchiseDetailPageProps {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: FranchiseDetailPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  
+  try {
+    const res = await fetch(`${API_URL}/api/exhibitor-registrations/${id}/`);
+    if (res.ok) {
+      const item = await res.json();
+      const name = item.company_name || 'Upcoming Franchise';
+      const industry = item.industry || 'General';
+      return {
+        title: `${name} Franchise Opportunity | NFIS`,
+        description: `Explore the ${name} franchise opportunity in the ${industry} sector. View investment details, ROI, and growth potential on the National Franchise Investment Summit platform.`,
+        openGraph: {
+          title: `${name} - Premium Franchise Opportunity`,
+          description: `Investment required: ${item.investment_required}. Discover why ${name} is a leading brand in ${industry}.`,
+          images:  item.logo ? [{ url: item.logo }] : [],
+        }
+      };
+    }
+  } catch (e) {}
+
+  return { title: 'Franchise Detail | NFIS' };
 }
 
 export default async function FranchiseDetailPage({ params }: FranchiseDetailPageProps) {
