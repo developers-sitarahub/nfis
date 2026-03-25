@@ -41,7 +41,7 @@ export function Navbar() {
 
     // Listen for custom login/logout events on the same tab
     window.addEventListener('auth-change', loadUserData);
-    
+
     // Listen for changes from other tabs (optional but good)
     window.addEventListener('storage', loadUserData);
 
@@ -58,10 +58,10 @@ export function Navbar() {
     localStorage.removeItem('user_name');
     localStorage.removeItem('user_role');
     localStorage.removeItem('company_name');
-    
+
     // Broadcast auth change
     window.dispatchEvent(new Event('auth-change'));
-    
+
     setIsLoggedIn(false);
     setIsUserMenuOpen(false);
     router.replace('/login');
@@ -88,16 +88,14 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative w-11 h-11 bg-white rounded-full p-1 shadow-md border border-gray-100 flex items-center justify-center transition-transform group-hover:scale-110 group-hover:shadow-red-500/10">
-              <div className="relative w-full h-full">
-                <Image
-                  src="/logo.png"
-                  alt="NFIS Logo"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </div>
+            <div className="relative w-12 h-12 flex-shrink-0 transition-transform group-hover:scale-105">
+              <Image
+                src="/logo.png"
+                alt="NFIS Logo"
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
             <div className="hidden sm:block">
               <p className="font-black text-gray-900 text-sm leading-none tracking-tight">NFIS</p>
@@ -143,7 +141,7 @@ export function Navbar() {
                       <p className="text-sm font-bold text-gray-900 mt-1 truncate">{userData.name}</p>
                       {userData.company && <p className="text-[11px] text-gray-500 font-medium mt-0.5">{userData.company}</p>}
                     </div>
-                    
+
                     <div className="space-y-1">
                       <Link
                         href={getDashboardLink()}
@@ -153,7 +151,7 @@ export function Navbar() {
                         <LayoutDashboard size={18} className="text-gray-400 group-hover:text-blue-600" />
                         Go to Dashboard
                       </Link>
-                      
+
                       <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50/50 rounded-xl transition-all group"
@@ -206,7 +204,7 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            
+
             {isLoggedIn ? (
               <div className="space-y-2 pt-4 border-t border-gray-100">
                 <div className="px-3">
