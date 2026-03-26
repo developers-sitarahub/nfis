@@ -84,6 +84,51 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Strategic Management Section */}
+      <section className="py-20 lg:py-24 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900 rounded-[3rem] p-8 lg:p-16 text-white relative overflow-hidden shadow-2xl">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/20 rounded-full blur-3xl -mr-32 -mt-32"></div>
+            <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 lg:gap-16">
+              <div className="flex-1">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-600/20 border border-red-600/30 text-red-400 text-xs font-black uppercase tracking-widest mb-6">
+                  <Star size={14} className="fill-red-600" /> Strategic Partnership
+                </div>
+                <h2 className="text-3xl lg:text-4xl font-black mb-6 tracking-tight leading-tight">Powered by Indo Global Trade Fair</h2>
+                <p className="text-lg text-blue-100/80 mb-8 leading-relaxed">
+                  The National Franchise Investment Summit (NFIS) is proudly powered and maintained by <span className="text-white font-bold">Indo Global Trade Fair (IGTF)</span>.
+                  By leveraging decades of expertise in international trade events and exhibition management, IGTF ensures that NFIS remains India's most strategic and trusted franchise ecosystem.
+                </p>
+                <a
+                  href="https://indoglobaltradefair.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-900 font-black uppercase text-sm rounded-2xl transition-all hover:scale-105 shadow-xl hover:bg-gray-50 group tracking-widest"
+                >
+                  Explore IGTF
+                  <Zap size={18} className="text-red-600 group-hover:animate-pulse" />
+                </a>
+              </div>
+              <div className="w-full md:w-auto flex justify-center">
+                <div className="relative w-48 h-48 lg:w-64 lg:h-64 flex items-center justify-center p-4">
+                  <div className="absolute inset-0 bg-white/10 rounded-[2.5rem] rotate-6 backdrop-blur-sm border border-white/5"></div>
+                  <div className="absolute inset-0 bg-white/5 rounded-[2.5rem] -rotate-3 backdrop-blur-sm border border-white/5"></div>
+                  <div className="relative w-full h-full bg-white rounded-[2rem] p-6 shadow-2xl flex items-center justify-center">
+                    <div className="relative w-full h-full">
+                      <img 
+                        src="/igtf-logo.png" 
+                        alt="Indo Global Trade Fair Official Logo" 
+                        style={{ objectFit: 'contain', width: '100%', height: '100%' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* What We Do Section */}
       <section className="py-20 lg:py-32 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">

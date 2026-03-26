@@ -108,7 +108,25 @@ export function Footer() {
 
         {/* Social Links and Copyright */}
         <div className="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-sm text-gray-500">&copy; 2026 NFIS - National Franchise Investment Summit. All rights reserved.</p>
+          <div className="flex flex-col gap-2 text-center md:text-left">
+            <p className="text-sm text-gray-400 font-medium tracking-tight">
+              &copy; {new Date().getFullYear()} NFIS - National Franchise Investment Summit. All rights reserved.
+            </p>
+            <div className="text-[11px] text-gray-500 font-black uppercase tracking-widest flex flex-wrap items-center justify-center md:justify-start gap-2">
+              <span>Powered and maintained by</span>
+              <a
+                href="https://indoglobaltradefair.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-red-500 transition-all underline underline-offset-4 decoration-red-500/30 flex items-center gap-1.5"
+              >
+                <span className="bg-white p-0.5 rounded-sm shadow-sm flex items-center justify-center">
+                  <img src="/igtf-logo.png" alt="IGTF Icon" className="w-3.5 h-3.5 object-contain" />
+                </span>
+                Indo Global Trade Fair (IGTF)
+              </a>
+            </div>
+          </div>
           <div className="flex gap-4 mt-4 md:mt-0">
             <a href="#" className="text-gray-400 hover:text-red-400 transition-colors">
               <Linkedin size={20} />
