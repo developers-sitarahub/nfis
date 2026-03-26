@@ -92,7 +92,7 @@ export function Footer() {
             <div className="space-y-3 text-sm">
               <div className="flex gap-2">
                 <Mail size={16} className="flex-shrink-0 mt-0.5 text-red-400" />
-                <span className="text-gray-400">info@nfis.com</span>
+                <span className="text-gray-400">info@nationalfranchiseinvestmentsummit.com.com</span>
               </div>
               <div className="flex gap-2">
                 <Phone size={16} className="flex-shrink-0 mt-0.5 text-red-400" />

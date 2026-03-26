@@ -70,7 +70,7 @@ export default function ContactPage() {
             </div>
             <div className="p-6 pt-0">
               <p className="text-gray-600">Send us an email anytime</p>
-              <p className="font-semibold text-foreground mt-2">info@nfis.com</p>
+              <p className="font-semibold text-foreground mt-2">info@nationalfranchiseinvestmentsummit.com.com</p>
             </div>
           </div>
 
