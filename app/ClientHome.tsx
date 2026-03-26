@@ -123,7 +123,7 @@ export default function Home() {
               {/* Refined Glowing Orbs in Background */}
               <div className="absolute -inset-8 bg-white/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
               <div className="absolute -inset-4 bg-gradient-to-tr from-red-500/20 to-blue-500/20 rounded-full blur-2xl animate-pulse group-hover:scale-150 transition-all duration-1000"></div>
-              
+
               {/* White Circular Hero Logo Backdrop */}
               <div className="relative w-full h-full bg-white rounded-full p-2 shadow-2xl flex items-center justify-center border-4 border-white/20 transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:scale-110 group-hover:shadow-[0_0_80px_rgba(255,255,255,0.3)]">
                 <div className="relative w-full h-full transform transition-transform duration-1000 group-hover:scale-110">
@@ -136,7 +136,7 @@ export default function Home() {
                   />
                 </div>
               </div>
-              
+
               {/* Elegant Accent Rings */}
               <div className="absolute -inset-2 border border-white/10 rounded-full transition-all duration-1000 group-hover:scale-125 group-hover:opacity-0"></div>
               <div className="absolute -inset-4 border border-white/5 rounded-full transition-all duration-1000 group-hover:scale-150 group-hover:opacity-0 delay-75"></div>
