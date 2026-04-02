@@ -717,6 +717,8 @@ function FranchisorRegistration() {
           company_name: formData.companyName,
           contact_person_name: formData.contactPersonName,
           contact_number: formData.phone,
+          is_email_verified: isEmailVerified,
+          is_phone_verified: isPhoneVerified,
           source_platform: 'NFIS',
         }),
       });
@@ -1156,6 +1158,8 @@ function InvestorRegistration() {
           company_name: formData.companyName,
           full_name: formData.contactPersonName,
           phone_number: formData.phone,
+          is_email_verified: isEmailVerified,
+          is_phone_verified: isPhoneVerified,
           source_platform: 'NFIS',
         }),
       });

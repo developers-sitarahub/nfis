@@ -276,6 +276,48 @@ export default function InvestorDashboard() {
                         className="block w-full px-8 py-6 bg-gray-50/50 border-2 border-transparent rounded-[2.5rem] text-gray-900 focus:bg-white focus:outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-blue-600 transition-all duration-500 resize-none font-medium leading-relaxed"
                         placeholder={`Strategize your ${label.toLowerCase()}...`}
                       />
+                    ) : key === 'investment_budget' ? (
+                      <div className="flex items-center gap-1 sm:gap-2 w-full px-8 py-6 bg-gray-50/50 border-2 border-transparent rounded-[2.5rem] focus-within:bg-white focus-within:ring-8 focus-within:ring-blue-500/5 focus-within:border-blue-600 transition-all duration-500">
+                        <span className="text-gray-500 font-bold">₹</span>
+                        <input type="number" placeholder="10" className="w-12 sm:w-16 bg-transparent outline-none text-gray-900 font-black text-lg no-spinners"
+                          onChange={(e) => {
+                            const currentParts = (value || '₹0 Lakh - ₹0 Lakh').split(' - ');
+                            const minUnit = currentParts[0]?.match(/(K|Lakh|Crore)/i)?.[0] || 'Lakh';
+                            handleChange(key, `₹${e.target.value} ${minUnit} - ${currentParts[1] || '₹0 Lakh'}`);
+                          }}
+                          value={(value || '').split(' - ')[0]?.match(/₹?([\d.]+)/)?.[1] || ''}
+                        />
+                        <select className="bg-transparent outline-none text-gray-600 font-semibold appearance-none cursor-pointer"
+                          onChange={(e) => {
+                            const currentParts = (value || '₹0 Lakh - ₹0 Lakh').split(' - ');
+                            const minNum = currentParts[0]?.match(/₹?([\d.]+)/)?.[1] || '0';
+                            handleChange(key, `₹${minNum} ${e.target.value} - ${currentParts[1] || '₹0 Lakh'}`);
+                          }}
+                          value={(value || '').split(' - ')[0]?.match(/(K|Lakh|Crore)/i)?.[0] || 'Lakh'}
+                        >
+                          <option value="K">K</option><option value="Lakh">Lakh</option><option value="Crore">Crore</option>
+                        </select>
+                        <span className="text-gray-400 font-black px-2">-</span>
+                        <span className="text-gray-500 font-bold">₹</span>
+                        <input type="number" placeholder="50" className="w-12 sm:w-16 bg-transparent outline-none text-gray-900 font-black text-lg no-spinners"
+                          onChange={(e) => {
+                            const currentParts = (value || '₹0 Lakh - ₹0 Lakh').split(' - ');
+                            const maxUnit = currentParts[1]?.match(/(K|Lakh|Crore)/i)?.[0] || 'Lakh';
+                            handleChange(key, `${currentParts[0] || '₹0 Lakh'} - ₹${e.target.value} ${maxUnit}`);
+                          }}
+                          value={(value || '').split(' - ')[1]?.match(/₹?([\d.]+)/)?.[1] || ''}
+                        />
+                        <select className="bg-transparent outline-none text-gray-600 font-semibold appearance-none cursor-pointer"
+                          onChange={(e) => {
+                            const currentParts = (value || '₹0 Lakh - ₹0 Lakh').split(' - ');
+                            const maxNum = currentParts[1]?.match(/₹?([\d.]+)/)?.[1] || '0';
+                            handleChange(key, `${currentParts[0] || '₹0 Lakh'} - ₹${maxNum} ${e.target.value}`);
+                          }}
+                          value={(value || '').split(' - ')[1]?.match(/(K|Lakh|Crore)/i)?.[0] || 'Lakh'}
+                        >
+                          <option value="K">K</option><option value="Lakh">Lakh</option><option value="Crore">Crore</option>
+                        </select>
+                      </div>
                     ) : (
                       <input
                         type={key.includes('number') ? 'tel' : 'text'}

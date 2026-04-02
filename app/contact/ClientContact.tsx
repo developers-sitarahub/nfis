@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Mail, Phone, MapPin, CheckCircle } from 'lucide-react';
+import { Mail, Phone, MapPin, CheckCircle, Lock } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -20,6 +21,14 @@ type ContactFormData = z.infer<typeof contactSchema>;
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [emailOtp, setEmailOtp] = useState('');
+  const [phoneOtp, setPhoneOtp] = useState('');
+  const [isEmailOtpSent, setIsEmailOtpSent] = useState(false);
+  const [isPhoneOtpSent, setIsPhoneOtpSent] = useState(false);
+  const [isVerifying, setIsVerifying] = useState<'email' | 'phone' | null>(null);
+  const [isSendingOtp, setIsSendingOtp] = useState<'email' | 'phone' | null>(null);
 
   const {
     register,
@@ -34,18 +43,123 @@ export default function ContactPage() {
 
   const businessType = watch('businessType');
   const investmentCapacity = watch('investmentCapacity');
+  const emailFieldValue = watch('email');
+  const phoneFieldValue = watch('phone');
+
+  const sendOtp = async (type: 'email' | 'phone') => {
+    const value = type === 'email' ? emailFieldValue : phoneFieldValue;
+    if (!value) {
+      toast.error(`Please enter your ${type} first.`);
+      return;
+    }
+
+    setIsSendingOtp(type);
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${API_URL}/api/register/send-otp/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, value }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        if (type === 'email') setIsEmailOtpSent(true);
+        else setIsPhoneOtpSent(true);
+        toast.success(data.message || 'OTP sent successfully!');
+      } else {
+        toast.error(data.detail || 'Failed to send OTP.');
+      }
+    } catch (error) {
+      console.error('Error sending OTP:', error);
+      toast.error('Failed to send OTP.');
+    } finally {
+      setIsSendingOtp(null);
+    }
+  };
+
+  const verifyOtp = async (type: 'email' | 'phone') => {
+    const value = type === 'email' ? emailFieldValue : phoneFieldValue;
+    const otp = type === 'email' ? emailOtp : phoneOtp;
+
+    if (!otp) {
+      toast.error('Please enter the OTP.');
+      return;
+    }
+
+    setIsVerifying(type);
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${API_URL}/api/register/verify-otp/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, value, otp }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        if (type === 'email') setIsEmailVerified(true);
+        else setIsPhoneVerified(true);
+        toast.success(data.message || 'Verified successfully!');
+      } else {
+        toast.error(data.detail || 'Invalid OTP.');
+      }
+    } catch (error) {
+      console.error('Error verifying OTP:', error);
+      toast.error('Verification failed.');
+    } finally {
+      setIsVerifying(null);
+    }
+  };
 
   const onSubmit = async (data: ContactFormData) => {
-    setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    console.log('Form submitted:', data);
-    setSubmitted(true);
-    reset();
-    setIsLoading(false);
+    if (!isEmailVerified || !isPhoneVerified) {
+      toast.error('Please verify your email and phone number first.');
+      return;
+    }
 
-    // Reset success message after 5 seconds
-    setTimeout(() => setSubmitted(false), 5000);
+    setIsLoading(true);
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${API_URL}/api/contact/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          full_name: data.name,
+          email: data.email,
+          phone_number: data.phone,
+          business_type: data.businessType || '',
+          investment_capacity: data.investmentCapacity || '',
+          message: data.message,
+          is_email_verified: isEmailVerified,
+          is_phone_verified: isPhoneVerified,
+          source_platform: 'NFIS',
+        }),
+      });
+
+      if (response.ok) {
+        setSubmitted(true);
+        reset();
+        setIsEmailVerified(false);
+        setIsPhoneVerified(false);
+        setIsEmailOtpSent(false);
+        setIsPhoneOtpSent(false);
+        setEmailOtp('');
+        setPhoneOtp('');
+        setTimeout(() => setSubmitted(false), 5000);
+      } else {
+        const errorData = await response.json();
+        const errorMsg = Object.entries(errorData)
+          .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(', ') : val}`)
+          .join('\n');
+        toast.error(errorMsg || 'Failed to submit form.');
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
+      toast.error('An error occurred while submitting the form.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -136,13 +250,57 @@ export default function ContactPage() {
                   <label htmlFor="email" className="text-sm font-medium text-foreground">
                     Email Address *
                   </label>
-                  <input
-                    id="email"
-                    type="email"
-                    placeholder="john@example.com"
-                    {...register('email')}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-1"
-                  />
+                  {(!isEmailOtpSent || isEmailVerified) ? (
+                    <div className="flex gap-2 relative">
+                      <div className="relative flex-1">
+                        <input
+                          id="email"
+                          type="email"
+                          placeholder="john@example.com"
+                          disabled={isEmailVerified}
+                          {...register('email')}
+                          className={`flex h-10 w-full rounded-md border border-input px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-1 ${isEmailVerified ? 'bg-green-50 border-green-200' : 'bg-background'}`}
+                        />
+                      </div>
+                      {!isEmailVerified && (
+                        <button
+                          type="button"
+                          onClick={() => sendOtp('email')}
+                          disabled={!emailFieldValue || isVerifying === 'email' || isSendingOtp === 'email'}
+                          className="px-4 bg-primary text-white text-sm font-semibold rounded-md hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center justify-center min-w-[90px] h-10 mt-1"
+                        >
+                          {isSendingOtp === 'email' ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : 'Send OTP'}
+                        </button>
+                      )}
+                      {isEmailVerified && (
+                        <div className="flex items-center text-green-600 font-semibold text-sm gap-1 h-10 mt-1">
+                          <CheckCircle size={18} /> Verified
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex gap-2 relative mt-1">
+                      <div className="relative flex-1">
+                        <Lock size={18} className="absolute left-3 top-3 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Enter Email OTP"
+                          value={emailOtp}
+                          onChange={(e) => setEmailOtp(e.target.value)}
+                          className="flex h-10 w-full rounded-md border border-input pl-10 pr-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-background"
+                          autoFocus
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => verifyOtp('email')}
+                        disabled={isVerifying === 'email'}
+                        className="px-4 bg-green-600 text-white text-sm font-semibold rounded-md hover:bg-green-700 disabled:opacity-50 transition-all flex items-center justify-center min-w-[90px] h-10"
+                      >
+                        {isVerifying === 'email' ? '...' : 'Verify'}
+                      </button>
+                    </div>
+                  )}
                   {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
                 </div>
 
@@ -151,13 +309,57 @@ export default function ContactPage() {
                   <label htmlFor="phone" className="text-sm font-medium text-foreground">
                     Phone Number *
                   </label>
-                  <input
-                    id="phone"
-                    type="tel"
-                    placeholder="+91 98205 31096"
-                    {...register('phone')}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-1"
-                  />
+                  {(!isPhoneOtpSent || isPhoneVerified) ? (
+                    <div className="flex gap-2 relative">
+                      <div className="relative flex-1">
+                        <input
+                          id="phone"
+                          type="tel"
+                          placeholder="+91 98205 31096"
+                          disabled={isPhoneVerified}
+                          {...register('phone')}
+                          className={`flex h-10 w-full rounded-md border border-input px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-1 ${isPhoneVerified ? 'bg-green-50 border-green-200' : 'bg-background'}`}
+                        />
+                      </div>
+                      {!isPhoneVerified && (
+                        <button
+                          type="button"
+                          onClick={() => sendOtp('phone')}
+                          disabled={!phoneFieldValue || isVerifying === 'phone' || isSendingOtp === 'phone'}
+                          className="px-4 bg-primary text-white text-sm font-semibold rounded-md hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center justify-center min-w-[90px] h-10 mt-1"
+                        >
+                          {isSendingOtp === 'phone' ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : 'Send OTP'}
+                        </button>
+                      )}
+                      {isPhoneVerified && (
+                        <div className="flex items-center text-green-600 font-semibold text-sm gap-1 h-10 mt-1">
+                          <CheckCircle size={18} /> Verified
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex gap-2 relative mt-1">
+                      <div className="relative flex-1">
+                        <Lock size={18} className="absolute left-3 top-3 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Enter Phone OTP"
+                          value={phoneOtp}
+                          onChange={(e) => setPhoneOtp(e.target.value)}
+                          className="flex h-10 w-full rounded-md border border-input pl-10 pr-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-background"
+                          autoFocus
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => verifyOtp('phone')}
+                        disabled={isVerifying === 'phone'}
+                        className="px-4 bg-green-600 text-white text-sm font-semibold rounded-md hover:bg-green-700 disabled:opacity-50 transition-all flex items-center justify-center min-w-[90px] h-10"
+                      >
+                        {isVerifying === 'phone' ? '...' : 'Verify'}
+                      </button>
+                    </div>
+                  )}
                   {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>}
                 </div>
 
@@ -198,11 +400,12 @@ export default function ContactPage() {
                     className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-1"
                   >
                     <option value="">Select investment range</option>
-                    <option value="0-100k">$0 - $100K</option>
-                    <option value="100-250k">$100K - $250K</option>
-                    <option value="250-500k">$250K - $500K</option>
-                    <option value="500k-1m">$500K - $1M</option>
-                    <option value="1m+">$1M+</option>
+                    <option value="Up to ₹25 Lakhs">Up to ₹25 Lakhs</option>
+                    <option value="₹25 Lakhs - ₹50 Lakhs">₹25 Lakhs - ₹50 Lakhs</option>
+                    <option value="₹50 Lakhs - ₹1 Crore">₹50 Lakhs - ₹1 Crore</option>
+                    <option value="₹1 Crore - ₹2.5 Crores">₹1 Crore - ₹2.5 Crores</option>
+                    <option value="₹2.5 Crores - ₹5 Crores">₹2.5 Crores - ₹5 Crores</option>
+                    <option value="₹5 Crores+">₹5 Crores+</option>
                   </select>
                 </div>
 
@@ -224,7 +427,7 @@ export default function ContactPage() {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoading || !isEmailVerified || !isPhoneVerified}
                   className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full"
                 >
                   {isLoading ? 'Sending...' : 'Send Message'}
