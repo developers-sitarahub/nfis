@@ -22,7 +22,7 @@ export default async function Page() {
 
   try {
     const res = await fetch(`${API_URL}/api/events/`, {
-      next: { revalidate: 3600 } // Cache for 1 hour
+      next: { revalidate: 30 } // Cache for 30 seconds
     });
     
     if (res.ok) {

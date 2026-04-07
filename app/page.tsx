@@ -31,7 +31,7 @@ export default async function Page() {
   try {
     // Fetch Franchises
     const franchiseRes = await fetch(`${API_URL}/api/exhibitor-registrations/`, {
-      next: { revalidate: 3600 }
+      next: { revalidate: 30 }
     });
 
     if (franchiseRes.ok) {
@@ -75,7 +75,7 @@ export default async function Page() {
 
     // Fetch Exhibitions
     const exhibitionRes = await fetch(`${API_URL}/api/events/`, {
-      next: { revalidate: 3600 }
+      next: { revalidate: 30 }
     });
 
     if (exhibitionRes.ok) {

@@ -13,38 +13,42 @@ export default function ExhibitionsPage({ initialExhibitions = [] }: { initialEx
   const [featuredOnly, setFeaturedOnly] = useState(false);
 
   useEffect(() => {
-    // Optional: Refresh data on mount or keep server data
-    if (initialExhibitions.length === 0) {
-      async function fetchExhibitions() {
-        setLoading(true);
-        try {
-          const response = await fetch('/api/events-proxy');
-          if (response.ok) {
-            const data = await response.json();
-            if (data && data.results) {
-              const mapped = data.results.map((item: any) => ({
-                id: item.id.toString(),
-                name: item.title,
-                location: item.location || item.venue || 'TBA',
-                date: item.start_date,
-                description: item.description || 'No description available',
-                image: item.image || '',
-                featured: item.is_active,
-                attendees: parseInt(item.buyers_count) || undefined,
-                booths: parseInt(item.exhibitors_count) || undefined,
-              }));
-              setExhibitions(mapped);
-            }
+    const fetchExhibitions = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch('/api/events-proxy');
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.results) {
+            const mapped = data.results.map((item: any) => ({
+              id: item.id.toString(),
+              name: item.title,
+              location: item.location || item.venue || 'TBA',
+              date: item.start_date,
+              description: item.description || 'No description available',
+              image: item.image || '',
+              featured: item.is_active,
+              attendees: parseInt(item.buyers_count) || undefined,
+              booths: parseInt(item.exhibitors_count) || undefined,
+            }));
+            setExhibitions(mapped);
           }
-        } catch (error) {
-          console.error('Failed to fetch exhibitions:', error);
-        } finally {
-          setLoading(false);
         }
+      } catch (error) {
+        console.error('Failed to fetch exhibitions:', error);
+      } finally {
+        setLoading(false);
       }
-      fetchExhibitions();
-    }
-  }, [initialExhibitions]);
+    };
+
+    // Initial fetch
+    fetchExhibitions();
+
+    // Enable periodic polling every 30 seconds
+    const pollInterval = setInterval(fetchExhibitions, 30000);
+
+    return () => clearInterval(pollInterval);
+  }, []);
 
   const filtered = exhibitions.filter((exhibition) => {
     const matchesSearch =

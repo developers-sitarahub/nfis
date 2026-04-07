@@ -27,7 +27,7 @@ export default function Home({
 
   useEffect(() => {
     async function fetchFranchises() {
-      if (initialFranchises.length > 0) return;
+      // We don't skip anymore to allow polling for changes
       setLoadingFranchises(true);
       try {
         const res = await fetch('/api/exhibitor-registrations-proxy');
@@ -82,7 +82,7 @@ export default function Home({
     }
 
     async function fetchEvents() {
-      if (initialExhibitions.length > 0) return;
+      // Check removed to allow periodic refreshes
       setLoadingExhibitions(true);
       try {
         const response = await axios.get('/api/events-proxy');
@@ -109,9 +109,19 @@ export default function Home({
       }
     }
 
-    fetchFranchises();
-    fetchEvents();
-  }, [API_URL, initialFranchises, initialExhibitions]);
+    const refreshAll = () => {
+      fetchFranchises();
+      fetchEvents();
+    };
+
+    // Initial fetch on mount
+    refreshAll();
+
+    // Enable periodic refreshes every 30 seconds
+    const pollInterval = setInterval(refreshAll, 30000);
+
+    return () => clearInterval(pollInterval);
+  }, [API_URL]);
 
   const featuredExhibitions = apiExhibitions.length > 0
     ? apiExhibitions.filter((e) => e.featured).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(0, 2)
