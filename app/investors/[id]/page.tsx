@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, User, MapPin, Briefcase, IndianRupee, ShieldCheck, CheckCircle, Users } from 'lucide-react';
 import { notFound } from 'next/navigation';
+import RequestInfoButton from '@/components/RequestInfoButton';
 
 interface InvestorDetailPageProps {
   params: Promise<{ id: string }>;
@@ -214,12 +215,11 @@ export default async function InvestorDetailPage({ params }: InvestorDetailPageP
                 <p className="text-sm text-gray-400 mb-8 relative z-10 font-bold">Connect directly with this principal investor to discuss strategic partnership opportunities.</p>
                 
                 <div className="space-y-4 relative z-10">
-                   <button className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-blue-600/20 transition-all active:scale-[0.98] flex items-center justify-center gap-3">
-                     Request Introduction
-                   </button>
-                   <Link href="/contact" className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 border border-white/10">
-                     Support Inquiries
-                   </Link>
+                   <RequestInfoButton 
+                     investorName={investor.name} 
+                     buttonText="Request Information"
+                     className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-blue-600/20 transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+                   />
                 </div>
                 
                 <div className="mt-10 pt-10 border-t border-white/10 relative z-10">

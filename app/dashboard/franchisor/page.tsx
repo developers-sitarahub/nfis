@@ -322,47 +322,47 @@ export default function FranchisorDashboard() {
                         ))}
                       </select>
                     ) : key === 'investment_required' ? (
-                      <div className="flex items-center gap-1 sm:gap-2 w-full px-4 py-3 bg-gray-50/50 border-2 border-transparent rounded-2xl focus-within:bg-white focus-within:ring-4 focus-within:ring-red-500/10 focus-within:border-red-500 transition-all duration-300">
-                        <span className="text-gray-500 font-bold">₹</span>
-                        <input type="number" placeholder="10" className="w-12 sm:w-16 bg-transparent outline-none text-gray-900 font-semibold no-spinners"
-                          onChange={(e) => {
-                            const currentParts = (value || '₹0 Lakh - ₹0 Lakh').split(' - ');
-                            const minUnit = currentParts[0]?.match(/(K|Lakh|Crore)/i)?.[0] || 'Lakh';
-                            handleChange(key, `₹${e.target.value} ${minUnit} - ${currentParts[1] || '₹0 Lakh'}`);
-                          }}
-                          value={(value || '').split(' - ')[0]?.match(/₹?([\d.]+)/)?.[1] || ''}
-                        />
-                        <select className="bg-transparent outline-none text-gray-600 font-semibold appearance-none cursor-pointer"
-                          onChange={(e) => {
-                            const currentParts = (value || '₹0 Lakh - ₹0 Lakh').split(' - ');
-                            const minNum = currentParts[0]?.match(/₹?([\d.]+)/)?.[1] || '0';
-                            handleChange(key, `₹${minNum} ${e.target.value} - ${currentParts[1] || '₹0 Lakh'}`);
-                          }}
-                          value={(value || '').split(' - ')[0]?.match(/(K|Lakh|Crore)/i)?.[0] || 'Lakh'}
-                        >
-                          <option value="K">K</option><option value="Lakh">Lakh</option><option value="Crore">Crore</option>
-                        </select>
-                        <span className="text-gray-400 font-black">-</span>
-                        <span className="text-gray-500 font-bold">₹</span>
-                        <input type="number" placeholder="50" className="w-12 sm:w-16 bg-transparent outline-none text-gray-900 font-semibold no-spinners"
-                          onChange={(e) => {
-                            const currentParts = (value || '₹0 Lakh - ₹0 Lakh').split(' - ');
-                            const maxUnit = currentParts[1]?.match(/(K|Lakh|Crore)/i)?.[0] || 'Lakh';
-                            handleChange(key, `${currentParts[0] || '₹0 Lakh'} - ₹${e.target.value} ${maxUnit}`);
-                          }}
-                          value={(value || '').split(' - ')[1]?.match(/₹?([\d.]+)/)?.[1] || ''}
-                        />
-                        <select className="bg-transparent outline-none text-gray-600 font-semibold appearance-none cursor-pointer"
-                          onChange={(e) => {
-                            const currentParts = (value || '₹0 Lakh - ₹0 Lakh').split(' - ');
-                            const maxNum = currentParts[1]?.match(/₹?([\d.]+)/)?.[1] || '0';
-                            handleChange(key, `${currentParts[0] || '₹0 Lakh'} - ₹${maxNum} ${e.target.value}`);
-                          }}
-                          value={(value || '').split(' - ')[1]?.match(/(K|Lakh|Crore)/i)?.[0] || 'Lakh'}
-                        >
-                          <option value="K">K</option><option value="Lakh">Lakh</option><option value="Crore">Crore</option>
-                        </select>
-                      </div>
+                    <div className="flex items-center gap-1 sm:gap-2 w-full px-4 py-4 bg-gray-50/50 border-2 border-transparent rounded-2xl focus-within:bg-white focus-within:ring-4 focus-within:ring-red-500/10 focus-within:border-red-500 transition-all duration-300 overflow-hidden">
+                      <span className="text-gray-500 font-bold shrink-0">₹</span>
+                      <input type="number" placeholder="10" className="min-w-0 w-8 sm:w-12 bg-transparent outline-none text-gray-900 font-semibold no-spinners"
+                        onChange={(e) => {
+                          const currentParts = (value || '₹0 Lakh - ₹0 Lakh').split(' - ');
+                          const minUnit = currentParts[0]?.match(/(K|Lakh|Crore)/i)?.[0] || 'Lakh';
+                          handleChange(key, `₹${e.target.value} ${minUnit} - ${currentParts[1] || '₹0 Lakh'}`);
+                        }}
+                        value={(value || '').split(' - ')[0]?.match(/₹?([\d.]+)/)?.[1] || ''}
+                      />
+                      <select className="bg-transparent outline-none text-gray-600 font-semibold appearance-none cursor-pointer shrink-0"
+                        onChange={(e) => {
+                          const currentParts = (value || '₹0 Lakh - ₹0 Lakh').split(' - ');
+                          const minNum = currentParts[0]?.match(/₹?([\d.]+)/)?.[1] || '0';
+                          handleChange(key, `₹${minNum} ${e.target.value} - ${currentParts[1] || '₹0 Lakh'}`);
+                        }}
+                        value={(value || '').split(' - ')[0]?.match(/(K|Lakh|Crore)/i)?.[0] || 'Lakh'}
+                      >
+                        <option value="K">K</option><option value="Lakh">Lakh</option><option value="Crore">Crore</option>
+                      </select>
+                      <span className="text-gray-400 font-black shrink-0 px-0.5">-</span>
+                      <span className="text-gray-500 font-bold shrink-0">₹</span>
+                      <input type="number" placeholder="50" className="min-w-0 w-8 sm:w-12 bg-transparent outline-none text-gray-900 font-semibold no-spinners"
+                        onChange={(e) => {
+                          const currentParts = (value || '₹0 Lakh - ₹0 Lakh').split(' - ');
+                          const maxUnit = currentParts[1]?.match(/(K|Lakh|Crore)/i)?.[0] || 'Lakh';
+                          handleChange(key, `${currentParts[0] || '₹0 Lakh'} - ₹${e.target.value} ${maxUnit}`);
+                        }}
+                        value={(value || '').split(' - ')[1]?.match(/₹?([\d.]+)/)?.[1] || ''}
+                      />
+                      <select className="bg-transparent outline-none text-gray-600 font-semibold appearance-none cursor-pointer shrink-0"
+                        onChange={(e) => {
+                          const currentParts = (value || '₹0 Lakh - ₹0 Lakh').split(' - ');
+                          const maxNum = currentParts[1]?.match(/₹?([\d.]+)/)?.[1] || '0';
+                          handleChange(key, `${currentParts[0] || '₹0 Lakh'} - ₹${maxNum} ${e.target.value}`);
+                        }}
+                        value={(value || '').split(' - ')[1]?.match(/(K|Lakh|Crore)/i)?.[0] || 'Lakh'}
+                      >
+                        <option value="K">K</option><option value="Lakh">Lakh</option><option value="Crore">Crore</option>
+                      </select>
+                    </div>
                     ) : key === 'roi' ? (
                       <div className="flex items-center gap-2 w-full px-5 py-4 bg-gray-50/50 border-2 border-transparent rounded-2xl focus-within:bg-white focus-within:ring-4 focus-within:ring-red-500/10 focus-within:border-red-500 transition-all duration-300">
                         <input type="number" value={value || ''} onChange={(e) => handleChange(key, e.target.value)} className="bg-transparent outline-none text-gray-900 font-semibold flex-grow no-spinners" placeholder="e.g. 20" />

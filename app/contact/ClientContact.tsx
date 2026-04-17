@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Mail, Phone, MapPin, CheckCircle, Lock } from 'lucide-react';
+import { CheckCircle, Lock } from 'lucide-react';
 import { toast } from 'react-toastify';
 import LoadingScreen from '@/components/loading-screen';
 
@@ -175,47 +175,6 @@ export default function ContactPage() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-12 mb-12">
-          {/* Contact Info Cards */}
-          <div className="rounded-xl border bg-white shadow flex flex-col">
-            <div className="flex flex-col space-y-1.5 p-6">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Mail className="text-primary" size={24} />
-              </div>
-              <h3 className="font-semibold leading-none tracking-tight">Email</h3>
-            </div>
-            <div className="p-6 pt-0">
-              <p className="text-gray-600">Send us an email anytime</p>
-              <p className="font-semibold text-foreground mt-2">info@nationalfranchiseinvestmentsummit.com</p>
-            </div>
-          </div>
-
-          <div className="rounded-xl border bg-white shadow flex flex-col">
-            <div className="flex flex-col space-y-1.5 p-6">
-              <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mb-4">
-                <Phone className="text-accent" size={24} />
-              </div>
-              <h3 className="font-semibold leading-none tracking-tight">Phone</h3>
-            </div>
-            <div className="p-6 pt-0">
-              <p className="text-gray-600">Call us during business hours</p>
-              <p className="font-semibold text-foreground mt-2">+91 98205 31096</p>
-            </div>
-          </div>
-
-          <div className="rounded-xl border bg-white shadow flex flex-col">
-            <div className="flex flex-col space-y-1.5 p-6">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <MapPin className="text-primary" size={24} />
-              </div>
-              <h3 className="font-semibold leading-none tracking-tight">Address</h3>
-            </div>
-            <div className="p-6 pt-0">
-              <p className="text-gray-600">Visit our headquarters</p>
-              <p className="font-semibold text-foreground mt-2">Mumbai, Maharashtra, India</p>
-            </div>
-          </div>
-        </div>
 
         {/* Contact Form */}
         <div className="rounded-xl border bg-white shadow max-w-2xl mx-auto flex flex-col">

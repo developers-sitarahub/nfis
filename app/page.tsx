@@ -29,8 +29,9 @@ export default async function Page() {
   let initialExhibitions: any[] = [];
 
   try {
-    // Fetch Franchises
-    const franchiseRes = await fetch(`${API_URL}/api/exhibitor-registrations/`, {
+    // Fetch Franchises — only NFIS-registered exhibitors
+    const nfisSourcePlatforms = encodeURIComponent('NFIS,nfis.in');
+    const franchiseRes = await fetch(`${API_URL}/api/exhibitor-registrations/?source_platform=${nfisSourcePlatforms}`, {
       next: { revalidate: 30 }
     });
 

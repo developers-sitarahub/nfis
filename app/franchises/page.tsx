@@ -31,7 +31,8 @@ export default async function Page() {
   let initialFranchises: any[] = [];
 
   try {
-    const res = await fetch(`${API_URL}/api/exhibitor-registrations/`, {
+    const nfisSourcePlatforms = encodeURIComponent('NFIS,nfis.in');
+    const res = await fetch(`${API_URL}/api/exhibitor-registrations/?source_platform=${nfisSourcePlatforms}`, {
       next: { revalidate: 3600 } // Cache for 1 hour
     });
 
