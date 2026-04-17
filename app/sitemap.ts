@@ -21,10 +21,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route === '' ? 1 : 0.8,
   }));
 
-  // Dynamic routes (Franchises)
+  // Dynamic routes (Franchises) — only NFIS-registered exhibitors
   let franchiseRoutes: MetadataRoute.Sitemap = [];
   try {
-    const res = await fetch(`${apiUrl}/api/exhibitor-registrations/`);
+    const nfisSourcePlatforms = encodeURIComponent('NFIS,nfis.in');
+    const res = await fetch(`${apiUrl}/api/exhibitor-registrations/?source_platform=${nfisSourcePlatforms}`);
     if (res.ok) {
       const data = await res.json();
       const results = data.results || data;

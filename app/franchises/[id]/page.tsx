@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, TrendingUp, Users, Target, Award, CheckCircle, Store } from 'lucide-react';
 import { notFound } from 'next/navigation';
+import RequestInfoButton from '@/components/RequestInfoButton';
 
 interface FranchiseDetailPageProps {
   params: Promise<{ id: string }>;
@@ -229,12 +230,7 @@ export default async function FranchiseDetailPage({ params }: FranchiseDetailPag
                  <h3 className="font-semibold leading-none tracking-tight">Ready to Learn More?</h3>
               </div>
               <div className="p-6 pt-0 space-y-4">
-                <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-4 py-2 w-full">
-                  Request Information
-                </button>
-                <Link href="/contact" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-zinc-100 hover:text-accent-foreground h-10 px-4 py-2 w-full">
-                  Contact Us
-                </Link>
+                <RequestInfoButton franchiseName={franchise.name} />
                 
                 <div className="border-t pt-4">
                   <h4 className="font-semibold text-foreground mb-3">Quick Facts</h4>

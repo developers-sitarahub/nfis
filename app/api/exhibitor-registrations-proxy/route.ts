@@ -3,9 +3,14 @@ import axios from 'axios';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+// Only return exhibitors who registered via NFIS (source_platform = "NFIS" or "nfis.in")
+const NFIS_SOURCE_PLATFORMS = 'NFIS,nfis.in';
+
 export async function GET() {
   try {
-    const response = await axios.get(`${BACKEND_URL}/api/exhibitor-registrations/`);
+    const response = await axios.get(
+      `${BACKEND_URL}/api/exhibitor-registrations/?source_platform=${encodeURIComponent(NFIS_SOURCE_PLATFORMS)}`
+    );
     return NextResponse.json(response.data);
   } catch (error: any) {
     console.error('Error in exhibitor proxy route:', error.message);

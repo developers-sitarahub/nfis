@@ -54,34 +54,7 @@ export default function RegisterPage() {
           </div>
 
           {/* User Type Selection */}
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Franchisee Card */}
-            <button
-              onClick={() => setUserType('franchisee')}
-              className="group bg-white rounded-lg border-2 border-gray-200 p-8 hover:border-red-500 hover:shadow-lg transition-all duration-300 text-left"
-            >
-              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-red-600 group-hover:text-white transition-all">
-                <Building2 size={24} />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Franchisee</h3>
-              <p className="text-gray-600 mb-4">
-                I want to own and operate a franchise business
-              </p>
-              <ul className="space-y-2 text-sm text-gray-700">
-                <li className="flex items-center gap-2">
-                  <Check size={16} className="text-red-600" />
-                  Find opportunities
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={16} className="text-red-600" />
-                  Get support
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={16} className="text-red-600" />
-                  Connect with partners
-                </li>
-              </ul>
-            </button>
+          <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
 
             {/* Franchisor Card */}
             <button

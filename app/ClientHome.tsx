@@ -117,8 +117,8 @@ export default function Home({
     // Initial fetch on mount
     refreshAll();
 
-    // Enable periodic refreshes every 30 seconds
-    const pollInterval = setInterval(refreshAll, 30000);
+    // Enable periodic refreshes every 5 minutes
+    const pollInterval = setInterval(refreshAll, 300000);
 
     return () => clearInterval(pollInterval);
   }, [API_URL]);
@@ -420,18 +420,18 @@ export default function Home({
             Join thousands of entrepreneurs, franchisors, and investors at the National Franchise India Summit.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
-            <a
-              href={`${process.env.NEXT_PUBLIC_BASE_SITE_URL || 'http://localhost:3000'}/exhibition#registration-form`}
+            <Link
+              href="/register?type=franchisor"
               className="px-8 py-3 bg-white text-blue-700 font-semibold rounded-lg hover:bg-gray-100 transition-all duration-200 transform hover:scale-105"
             >
-              Book Exhibition Booth
-            </a>
-            <a
-              href={`${process.env.NEXT_PUBLIC_BASE_SITE_URL || 'http://localhost:3000'}/visitors#visitor-registration`}
+              Register as Franchisor
+            </Link>
+            <Link
+              href="/register?type=investor"
               className="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-200"
             >
-              Register as Visitor
-            </a>
+              Register as Investor
+            </Link>
           </div>
         </div>
       </section>

@@ -178,7 +178,7 @@ export default function FranchisesPage({ initialFranchises = [] }: { initialFran
       }
     };
     fetchFranchises();
-    const poll = setInterval(fetchFranchises, 30000);
+    const poll = setInterval(fetchFranchises, 300000); // Poll every 5 minutes
     return () => clearInterval(poll);
   }, [API_URL]);
 
