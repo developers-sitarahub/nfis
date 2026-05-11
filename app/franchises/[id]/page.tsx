@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, TrendingUp, Users, Target, Award, CheckCircle, Store } from 'lucide-react';
+import { ArrowLeft, CheckCircle, TrendingUp, Store, MapPin, IndianRupee, PieChart, Users, Clock } from 'lucide-react';
 import { notFound } from 'next/navigation';
+import RequestInfoButton from '@/components/RequestInfoButton';
 
 interface FranchiseDetailPageProps {
   params: Promise<{ id: string }>;
@@ -12,253 +12,252 @@ export async function generateMetadata({ params }: FranchiseDetailPageProps): Pr
   const { id } = await params;
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
   
+  let endpoint = 'franchisor-registrations';
+  let actualId = id;
+
+  if (id.includes('-')) {
+    const parts = id.split('-');
+    const type = parts[0];
+    actualId = parts[1];
+    endpoint = type === 'exhibitor' ? 'exhibitor-registrations' : 'franchisor-registrations';
+  }
+
   try {
-    const res = await fetch(`${API_URL}/api/exhibitor-registrations/${id}/`);
+    const res = await fetch(`${API_URL}/api/${endpoint}/${actualId}/`);
     if (res.ok) {
       const item = await res.json();
-      const name = item.company_name || 'Upcoming Franchise';
-      const industry = item.industry || 'General';
       return {
-        title: `${name} Franchise Opportunity | NFIS`,
-        description: `Explore the ${name} franchise opportunity in the ${industry} sector. View investment details, ROI, and growth potential on the National Franchise Investment Summit platform.`,
-        openGraph: {
-          title: `${name} - Premium Franchise Opportunity`,
-          description: `Investment required: ${item.investment_required}. Discover why ${name} is a leading brand in ${industry}.`,
-          images:  item.logo ? [{ url: item.logo }] : [],
-        }
+        title: `${item.company_name || 'Franchise'} | Opportunities`,
+        description: item.about || item.product_category || 'Explore this franchise opportunity.',
       };
     }
   } catch (e) {}
 
-  return { title: 'Franchise Detail | NFIS' };
+  return { title: 'Franchise Detail | Opportunities' };
 }
 
 export default async function FranchiseDetailPage({ params }: FranchiseDetailPageProps) {
   const { id } = await params;
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-  let item = null;
+  let franchise = null;
   
+  let endpoint = 'franchisor-registrations';
+  let actualId = id;
+
+  if (id.includes('-')) {
+    const parts = id.split('-');
+    const type = parts[0];
+    actualId = parts[1];
+    endpoint = type === 'exhibitor' ? 'exhibitor-registrations' : 'franchisor-registrations';
+  }
+
   try {
-    const res = await fetch(`${API_URL}/api/exhibitor-registrations/${id}/`, { next: { revalidate: 60 } });
+    const res = await fetch(`${API_URL}/api/${endpoint}/${actualId}/`, { next: { revalidate: 60 } });
     if (res.ok) {
-      item = await res.json();
+      const data = await res.json();
+      franchise = {
+        id: data.id,
+        logo: data.logo,
+        brandName: data.company_name,
+        category: data.industry || (data.product_category ? data.product_category.split(/[;,]/)[0].trim() : 'General'),
+        description: data.about || data.product_category || 'A premier franchise opportunity ready for expansion.',
+        investmentRange: data.investment_required || 'TBD',
+        franchiseFee: data.franchise_fee || 'TBD',
+        royalty: data.royalty || 'TBD',
+        requiredArea: data.space_requirement || 'TBD',
+        locationType: data.location_type || 'TBD',
+        roiTime: data.roi || 'TBD',
+        breakEven: data.break_even || 'TBD',
+        totalOutlets: data.units_operating || 0,
+        cities: data.cities ? data.cities.split(',').map((c: string) => c.trim()) : (data.event_location ? [data.event_location] : []),
+        training: data.training_support || false,
+        setupSupport: data.setup_support || false,
+        marketingSupport: data.marketing_support || false
+      };
     }
   } catch (err) {
     console.error("Failed to fetch franchise detail", err);
   }
 
-  if (!item) {
-    notFound();
+  if (!franchise) {
+    return notFound();
   }
 
-  const investmentStr = item.investment_required || '';
-  const minMatch = investmentStr.split('-')[0]?.match(/([\d.]+)\s*(K|Lakh|Crore)/i);
-  const maxMatch = investmentStr.split('-')[1]?.match(/([\d.]+)\s*(K|Lakh|Crore)/i);
-  
-  const parseVal = (match: any) => {
-    if (!match) return 0;
-    let val = parseFloat(match[1]);
-    const unit = (match[2] || '').toLowerCase();
-    if (unit === 'k') val *= 1000;
-    else if (unit === 'lakh') val *= 100000;
-    else if (unit === 'crore') val *= 10000000;
-    return val;
-  };
-
-  const minInvest = parseVal(minMatch);
-  const maxInvest = parseVal(maxMatch) || minInvest * 1.5;
-
-  const franchise = {
-    id: item.id.toString(),
-    name: item.company_name || 'Upcoming Franchise',
-    category: item.industry || 'General',
-    investmentRange: { min: minInvest, max: maxInvest },
-    description: item.about || '',
-    shortDescription: item.product_category || '',
-    roi: item.roi || '18-25',
-    yearsInBusiness: Number(item.founded_year) ? new Date().getFullYear() - Number(item.founded_year) : 5,
-    unitsOperating: Number(item.units_operating) || 0,
-    supportLevel: 'Comprehensive',
-    image: item.logo || '',
-    highlights: ['Proven Model', 'Training Included', 'Brand Support'],
-    verified: item.status === 'paid',
-  };
-
-  const formatInvestment = (value: number) => {
-    if (value >= 10000000) return `₹${(value / 10000000).toFixed(1).replace('.0', '')} Crore`;
-    if (value >= 100000) return `₹${(value / 100000).toFixed(1).replace('.0', '')} Lakh`;
-    if (value >= 1000) return `₹${(value / 1000).toFixed(0)}K`;
-    return `₹${value}`;
-  };
-
-  const formattedMinInvestment = formatInvestment(franchise.investmentRange.min);
-  const formattedMaxInvestment = formatInvestment(franchise.investmentRange.max);
+  const supports = [];
+  if (franchise.training) supports.push("Training");
+  if (franchise.setupSupport) supports.push("Setup Support");
+  if (franchise.marketingSupport) supports.push("Marketing Support");
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Back Button */}
-        <Link href="/franchises" className="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-8">
-          <ArrowLeft size={20} />
-          Back to Franchises
-        </Link>
-
-        {/* Header */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mb-8">
-          <div className="relative w-full h-80 overflow-hidden bg-gray-100 flex items-center justify-center">
-            {franchise.image ? (
-              <Image
-                src={franchise.image}
-                alt={franchise.name}
-                fill
-                className="object-cover"
-                priority
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center w-full h-full bg-gradient-to-br from-gray-50 to-gray-200">
-                <Store size={80} className="text-red-600/10 mb-4" />
-                <p className="text-sm font-black uppercase tracking-[0.4em] text-red-600/20">NFIS Participant</p>
+    <div className="min-h-screen bg-gray-50/50 pb-20">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        
+        {/* Top Section */}
+        <div className="mb-6">
+          <Link href="/franchises" className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-gray-900 mb-6 transition-colors">
+            <ArrowLeft size={16} /> Back to Listings
+          </Link>
+          
+          <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 w-64 h-64 bg-gradient-to-br from-red-50 to-orange-50 rounded-bl-[100%] -z-0 opacity-50 blur-3xl"></div>
+            
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
+                {franchise.logo ? (
+                  <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl bg-white border border-gray-100 shadow-sm p-2 shrink-0 flex items-center justify-center overflow-hidden">
+                    <img src={franchise.logo} alt={`${franchise.brandName} Logo`} className="w-full h-full object-contain" />
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
+                    <Store size={40} className="text-gray-300" />
+                  </div>
+                )}
+                <div>
+                  <span className="inline-block px-3 py-1 rounded-full bg-red-50 text-red-600 text-xs font-black uppercase tracking-widest mb-4 mt-2 sm:mt-0">
+                    {franchise.category}
+                  </span>
+                  <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight mb-4">
+                    {franchise.brandName}
+                  </h1>
+                  <p className="text-lg text-gray-600 max-w-2xl leading-relaxed">
+                    {franchise.description}
+                  </p>
+                </div>
               </div>
-            )}
-          </div>
-
-          <div className="p-8">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h1 className="text-4xl font-bold text-foreground mb-2">{franchise.name}</h1>
-                <span className="inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold bg-primary text-white">{franchise.category}</span>
+              
+              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-6 text-white text-center md:min-w-[240px] shadow-2xl flex flex-col justify-center transform md:rotate-1 hover:rotate-0 transition-transform mt-4 md:mt-0">
+                <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Investment Range</p>
+                <div className="text-3xl font-black text-white mb-6">
+                  {franchise.investmentRange}
+                </div>
+                <RequestInfoButton 
+                  franchiseName={franchise.brandName}
+                  buttonText="Apply for Franchise"
+                  className="w-full py-4 bg-red-600 hover:bg-red-500 text-white text-sm font-black uppercase tracking-widest rounded-xl transition-colors shadow-2xl flex items-center justify-center"
+                />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Key Metrics */}
-            <div className="rounded-xl border bg-white text-card-foreground shadow">
-              <div className="flex flex-col space-y-1.5 p-6">
-                <h3 className="font-semibold leading-none tracking-tight">Key Performance Metrics</h3>
+        {/* Middle Section (Key Info Grid) */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+          {/* Snapshots */}
+          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-md">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
+                <IndianRupee size={20} />
               </div>
-              <div className="p-6 pt-0">
-                <div className="grid grid-cols-2 gap-6 py-2">
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-2">
-                       <TrendingUp className="text-primary" size={24} />
-                    </div>
-                    <p className="text-2xl font-bold text-foreground">{franchise.roi}{franchise.roi !== 'TBD' ? '%' : ''}</p>
-                    <p className="text-sm text-gray-600">Average ROI</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mx-auto mb-2">
-                      <Users className="text-accent" size={24} />
-                    </div>
-                    <p className="text-2xl font-bold text-foreground">{franchise.unitsOperating}</p>
-                    <p className="text-sm text-gray-600">Units Operating</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-2">
-                       <Award className="text-primary" size={24} />
-                     </div>
-                    <p className="text-2xl font-bold text-foreground">{franchise.yearsInBusiness}</p>
-                    <p className="text-sm text-gray-600">Years in Business</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mx-auto mb-2">
-                      <Target className="text-accent" size={24} />
-                    </div>
-                    <p className="text-xl sm:text-2xl font-bold text-foreground">{franchise.supportLevel}</p>
-                    <p className="text-sm text-gray-600">Support Level</p>
-                  </div>
-                </div>
-              </div>
+              <h3 className="font-black text-gray-900 tracking-tight">Financials</h3>
             </div>
-
-            {/* Investment Details */}
-            <div className="rounded-xl border bg-white text-card-foreground shadow">
-              <div className="flex flex-col space-y-1.5 p-6">
-                <h3 className="font-semibold leading-none tracking-tight">Investment Details</h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center border-b border-gray-50 pb-3">
+                <span className="text-gray-500 text-sm font-medium">Franchise Fee</span>
+                <span className="text-gray-900 font-bold">{franchise.franchiseFee || 'N/A'}</span>
               </div>
-              <div className="p-6 pt-0">
-                <div className="mb-6">
-                  <h4 className="font-semibold text-foreground mb-2">Total Investment Range</h4>
-                  <p className="text-3xl font-bold text-primary">
-                    {formattedMinInvestment} - {formattedMaxInvestment}
-                  </p>
-                  <p className="text-sm text-gray-600 mt-2">
-                    This includes franchise fees, equipment, initial inventory, and working capital.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Highlights */}
-            <div className="rounded-xl border bg-white text-card-foreground shadow">
-              <div className="flex flex-col space-y-1.5 p-6">
-                <h3 className="font-semibold leading-none tracking-tight">Why Join {franchise.name}?</h3>
-              </div>
-              <div className="p-6 pt-0">
-                <ul className="space-y-3">
-                  {franchise.highlights.map((highlight, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <CheckCircle className="text-primary flex-shrink-0 mt-1" size={20} />
-                      <span className="text-gray-700">{highlight}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            {/* Description Section */}
-            <div className="rounded-xl border bg-white text-card-foreground shadow">
-              <div className="flex flex-col space-y-1.5 p-6">
-                <h3 className="font-semibold leading-none tracking-tight">About</h3>
-              </div>
-              <div className="p-6 pt-0">
-                <p className="text-gray-700 leading-relaxed">
-                   {franchise.description}
-                </p>
+              <div className="flex justify-between items-center border-b border-gray-50 pb-3">
+                <span className="text-gray-500 text-sm font-medium">Royalty</span>
+                <span className="text-gray-900 font-bold">{franchise.royalty || 'N/A'}</span>
               </div>
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="rounded-xl border bg-white text-card-foreground shadow sticky top-20">
-              <div className="flex flex-col space-y-1.5 p-6">
-                 <h3 className="font-semibold leading-none tracking-tight">Ready to Learn More?</h3>
+          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-md">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <Store size={20} />
               </div>
-              <div className="p-6 pt-0 space-y-4">
-                <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-4 py-2 w-full">
-                  Request Information
-                </button>
-                <Link href="/contact" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-zinc-100 hover:text-accent-foreground h-10 px-4 py-2 w-full">
-                  Contact Us
-                </Link>
-                
-                <div className="border-t pt-4">
-                  <h4 className="font-semibold text-foreground mb-3">Quick Facts</h4>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <p className="text-gray-600">Category</p>
-                      <p className="font-semibold text-foreground">{franchise.category}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600">Support</p>
-                      <p className="font-semibold text-foreground">{franchise.supportLevel}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600">Active Since</p>
-                      <p className="font-semibold text-foreground">
-                        {new Date().getFullYear() - franchise.yearsInBusiness}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+              <h3 className="font-black text-gray-900 tracking-tight">Requirements</h3>
+            </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center border-b border-gray-50 pb-3">
+                <span className="text-gray-500 text-sm font-medium">Required Area</span>
+                <span className="text-gray-900 font-bold">{franchise.requiredArea || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between items-center border-b border-gray-50 pb-3">
+                <span className="text-gray-500 text-sm font-medium">Location</span>
+                <span className="text-gray-900 font-bold">{franchise.locationType || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-md">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center">
+                <Clock size={20} />
+              </div>
+              <h3 className="font-black text-gray-900 tracking-tight">Returns</h3>
+            </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center border-b border-gray-50 pb-3">
+                <span className="text-gray-500 text-sm font-medium">ROI Time</span>
+                <span className="text-gray-900 font-bold">{franchise.roiTime || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between items-center border-b border-gray-50 pb-3">
+                <span className="text-gray-500 text-sm font-medium">Break-even</span>
+                <span className="text-gray-900 font-bold">{franchise.breakEven || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Outlet Presence */}
+          <div className="md:col-span-2 lg:col-span-3 bg-white rounded-3xl p-6 border border-gray-100 shadow-md">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                <MapPin size={20} />
+              </div>
+              <h3 className="font-black text-gray-900 tracking-tight">Presence & Reach</h3>
+            </div>
+            <div className="flex flex-col md:flex-row md:items-center gap-8">
+              <div className="text-center md:text-left min-w-[150px]">
+                <p className="text-4xl font-black text-gray-900">{franchise.totalOutlets}</p>
+                <p className="text-sm font-medium text-gray-500">Total Outlets</p>
+              </div>
+              <div className="flex-1 w-full flex flex-wrap gap-2">
+                {franchise.cities && franchise.cities.length > 0 ? (
+                  franchise.cities.map((city: string, idx: number) => (
+                    <span key={idx} className="px-4 py-2 rounded-xl bg-gray-50 text-gray-700 text-sm font-bold border border-gray-100">
+                      {city}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-gray-400 font-medium">Not specified</span>
+                )}
               </div>
             </div>
           </div>
         </div>
+
+        {/* Support Section */}
+        {supports.length > 0 && (
+          <div className="mb-8 bg-gradient-to-r from-gray-900 to-gray-800 rounded-3xl p-8 md:p-10 text-white shadow-2xl relative overflow-hidden">
+             
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+              <div className="max-w-md">
+                <h3 className="text-2xl font-black mb-4">Dedicated Support Setup</h3>
+                <p className="text-gray-400 md:text-lg">We provide extensive resources to ensure your launch and continuous operations run smoothly.</p>
+              </div>
+              <div className="flex flex-col space-y-4 min-w-[250px]">
+                {supports.map((s, idx) => (
+                  <div key={idx} className="flex items-center gap-3 bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/5">
+                    <CheckCircle className="text-green-400 shrink-0" size={24} />
+                    <span className="font-bold text-lg">{s}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Bottom Section */}
+        <div className="flex justify-center mt-12">
+           <RequestInfoButton 
+             franchiseName={franchise.brandName}
+             buttonText="Contact Franchisor"
+             className="px-12 py-5 bg-gray-900 hover:bg-black text-white text-sm font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-xl hover:shadow-2xl translate-y-0 hover:-translate-y-1 flex items-center justify-center"
+           />
+        </div>
+
       </div>
     </div>
   );

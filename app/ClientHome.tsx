@@ -22,58 +22,91 @@ export default function Home({
   const [loadingFranchises, setLoadingFranchises] = useState(false);
   const [apiExhibitions, setApiExhibitions] = useState<any[]>(initialExhibitions);
   const [loadingExhibitions, setLoadingExhibitions] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const checkLogin = () => {
+      const token = localStorage.getItem('access_token');
+      setIsLoggedIn(!!token);
+    };
+    checkLogin();
+    window.addEventListener('auth-change', checkLogin);
+    window.addEventListener('storage', checkLogin);
+    return () => {
+      window.removeEventListener('auth-change', checkLogin);
+      window.removeEventListener('storage', checkLogin);
+    };
+  }, []);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
     async function fetchFranchises() {
-      // We don't skip anymore to allow polling for changes
       setLoadingFranchises(true);
+      const NFIS_PLATFORMS = 'nfis,NFIS,nfis.in,manual,MANUAL';
       try {
-        const res = await fetch('/api/exhibitor-registrations-proxy');
-        if (res.ok) {
-          const data = await res.json();
-          const results = data.results || data;
+        const franchisorRes = await fetch(`${API_URL}/api/franchisor-registrations/?source_platform=${NFIS_PLATFORMS}`);
 
-          const mapped: Franchise[] = (Array.isArray(results) ? results : []).map((item: any) => {
+        let franchisors: any[] = [];
+
+        if (franchisorRes.ok) {
+          const data = await franchisorRes.json();
+          franchisors = data.results || data;
+        }
+
+        const allItems = [
+          ...franchisors.map(f => ({ ...f, _type: 'franchisor' }))
+        ];
+
+        const mapped: Franchise[] = allItems
+          .filter((item: any) => item.status === 'contacted' || item.status === 'paid')
+          .map((item: any) => {
             const investmentStr = item.investment_required || '';
-            const minMatch = investmentStr.split('-')[0]?.match(/([\d.]+)\s*(K|Lakh|Crore)/i);
-            const maxMatch = investmentStr.split('-')[1]?.match(/([\d.]+)\s*(K|Lakh|Crore)/i);
+            const minMatch = investmentStr.split('-')[0]?.match(/([\d.]+)\s*(K|Lakh|Lakhs|Crore|Crores)/i);
+            const maxMatch = investmentStr.split('-')[1]?.match(/([\d.]+)\s*(K|Lakh|Lakhs|Crore|Crores)/i);
 
             const parseVal = (match: any) => {
               if (!match) return 0;
               let val = parseFloat(match[1]);
               const unit = (match[2] || '').toLowerCase();
               if (unit === 'k') val *= 1000;
-              else if (unit === 'lakh') val *= 100000;
-              else if (unit === 'crore') val *= 10000000;
+              else if (unit === 'lakh' || unit === 'lakhs') val *= 100000;
+              else if (unit === 'crore' || unit === 'crores') val *= 10000000;
               return val;
             };
 
             const minInvest = parseVal(minMatch);
             const maxInvest = parseVal(maxMatch) || minInvest * 1.5;
 
+            let cities: string[] = [];
+            if (item.cities) {
+              cities = item.cities.split(',').map((c: string) => c.trim()).filter(Boolean);
+            } else if (item.event_location) {
+              cities = [item.event_location];
+            }
+
             return {
-              id: item.id.toString(),
+              id: `${item._type}-${item.id}`,
+              brandName: item.company_name || 'Upcoming Franchise',
               name: item.company_name || 'Upcoming Franchise',
-              categories: (item.industry || 'General').split(/[;,]/).map((s: string) => s.trim()).filter(Boolean),
-              investmentRange: {
-                min: minInvest,
-                max: maxInvest
-              },
-              description: item.about || '',
-              shortDescription: item.product_category || '',
-              roi: item.roi || '18-25',
-              yearsInBusiness: Number(item.founded_year) ? new Date().getFullYear() - Number(item.founded_year) : 5,
+              logo: item.logo || null,
+              category: (item.industry || item.product_category || 'General').split(/[;,]/)[0].trim(),
+              productCategory: item.product_category || '',
+              categories: (item.industry || item.product_category || 'General').split(/[;,]/).map((s: string) => s.trim()).filter(Boolean),
+              description: item.about || item.product_category || '',
+              shortDescription: item.product_category || item.about || '',
+              investmentRange: item.investment_required || (minInvest ? `\u20B9${minInvest}` : 'TBD'),
+              investmentRangeValue: { min: minInvest, max: maxInvest || minInvest * 1.5 },
+              roiTime: item.roi || '12–18 months',
+              roi: item.roi || '',
+              totalOutlets: Number(item.units_operating) || 0,
               unitsOperating: Number(item.units_operating) || 0,
-              supportLevel: 'Comprehensive',
-              image: item.logo || '',
-              highlights: ['Proven Model', 'Training Included', 'Brand Support'],
               verified: item.status === 'paid',
-            };
+              state: cities[0] || '',
+            } as any;
           });
-          setFeaturedFranchises(mapped.slice(0, 3));
-        }
+
+        setFeaturedFranchises(mapped.slice(0, 3));
       } catch (err) {
         console.error('Failed to fetch franchises:', err);
       } finally {
@@ -117,8 +150,8 @@ export default function Home({
     // Initial fetch on mount
     refreshAll();
 
-    // Enable periodic refreshes every 30 seconds
-    const pollInterval = setInterval(refreshAll, 30000);
+    // Enable periodic refreshes every 5 minutes
+    const pollInterval = setInterval(refreshAll, 300000);
 
     return () => clearInterval(pollInterval);
   }, [API_URL]);
@@ -201,9 +234,15 @@ export default function Home({
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 mb-8 min-h-[400px]">
+          <div className={`grid gap-8 mb-8 min-h-[400px] ${
+            featuredFranchises.length === 1
+              ? "max-w-md mx-auto grid-cols-1"
+              : featuredFranchises.length === 2
+                ? "max-w-4xl mx-auto md:grid-cols-2"
+                : "grid-cols-1 md:grid-cols-3"
+          }`}>
             {loadingFranchises ? (
-              <div className="col-span-3 flex flex-col items-center justify-center py-20">
+              <div className="col-span-full flex flex-col items-center justify-center py-20">
                 <RefreshCw className="animate-spin text-red-600 mb-4" size={40} />
                 <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Accessing Franchise Network...</p>
               </div>
@@ -212,7 +251,7 @@ export default function Home({
                 <FranchiseCard key={franchise.id} franchise={franchise} />
               ))
             ) : (
-              <div className="col-span-3 text-center py-20">
+              <div className="col-span-full text-center py-20">
                 <p className="text-gray-500">Currently Onboarding. Please visit after sometime.</p>
               </div>
             )}
@@ -407,34 +446,42 @@ export default function Home({
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-blue-700 via-blue-600 to-red-600 text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 right-10 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-        </div>
-
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-balance">
-            Ready to Transform Your Franchise Journey?
-          </h2>
-          <p className="text-xl opacity-90 mb-10 max-w-2xl mx-auto text-balance">
-            Join thousands of entrepreneurs, franchisors, and investors at the National Franchise India Summit.
-          </p>
-          <div className="flex gap-4 justify-center flex-wrap">
-            <a
-              href={`${process.env.NEXT_PUBLIC_BASE_SITE_URL || 'http://localhost:3000'}/exhibition#registration-form`}
-              className="px-8 py-3 bg-white text-blue-700 font-semibold rounded-lg hover:bg-gray-100 transition-all duration-200 transform hover:scale-105"
-            >
-              Book Exhibition Booth
-            </a>
-            <a
-              href={`${process.env.NEXT_PUBLIC_BASE_SITE_URL || 'http://localhost:3000'}/visitors#visitor-registration`}
-              className="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-200"
-            >
-              Register as Visitor
-            </a>
+      {!isLoggedIn && (
+        <section className="py-20 bg-gradient-to-br from-blue-700 via-blue-600 to-red-600 text-white relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-10 right-10 w-96 h-96 bg-white rounded-full blur-3xl"></div>
           </div>
-        </div>
-      </section>
+
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-balance">
+              Ready to Transform Your Franchise Journey?
+            </h2>
+            <p className="text-xl opacity-90 mb-10 max-w-2xl mx-auto text-balance">
+              Join thousands of entrepreneurs, franchisors, and investors at the National Franchise India Summit.
+            </p>
+            <div className="flex gap-4 justify-center flex-wrap">
+              <Link
+                href="/register?type=franchisor"
+                className="px-8 py-3 bg-white text-blue-700 font-semibold rounded-lg hover:bg-gray-100 transition-all duration-200 transform hover:scale-105 shadow-md"
+              >
+                Register as Franchisor
+              </Link>
+              <Link
+                href="/register?type=visitor"
+                className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
+              >
+                Register as Visitor
+              </Link>
+              <Link
+                href="/register?type=investor"
+                className="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-200"
+              >
+                Register as Investor
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { Calendar, MapPin, Users, Store, Globe, Clock, ChevronRight, Zap, Target } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -60,6 +61,10 @@ export default async function ExhibitionDetailsPage({ params }: Props) {
     return notFound();
   }
 
+  const cookieStore = await cookies();
+  const isLoggedIn = !!cookieStore.get('access_token')?.value;
+
+  const isDateSet = event.start_date && !event.start_date.startsWith('2099');
   const formattedStartDate = event.start_date
     ? new Date(event.start_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : 'TBA';
@@ -98,7 +103,7 @@ export default async function ExhibitionDetailsPage({ params }: Props) {
           <div className="flex flex-wrap items-center gap-4 text-gray-200 text-sm sm:text-base font-medium">
             <div className="flex items-center gap-2 bg-black/30 backdrop-blur-md px-4 py-2 rounded-full border border-gray-100/10">
               <Calendar size={18} className="text-red-500" />
-              <span>{formattedStartDate} - {formattedEndDate}</span>
+              <span>{isDateSet ? `${formattedStartDate} - ${formattedEndDate}` : "Dates will be announced soon"}</span>
             </div>
             {(event.location || event.venue) && (
               <div className="flex items-center gap-2 bg-black/30 backdrop-blur-md px-4 py-2 rounded-full border border-gray-100/10">
@@ -106,12 +111,7 @@ export default async function ExhibitionDetailsPage({ params }: Props) {
                 <span>{event.location} {event.venue && `— ${event.venue}`}</span>
               </div>
             )}
-            {event.is_active && (
-              <div className="flex items-center gap-2 bg-red-600/90 backdrop-blur-md px-4 py-2 rounded-full text-white shadow-xl shadow-red-900/50">
-                <Zap size={16} className="fill-white" />
-                <span>Trending Now</span>
-              </div>
-            )}
+
           </div>
         </div>
       </section>
@@ -185,21 +185,21 @@ export default async function ExhibitionDetailsPage({ params }: Props) {
               </div>
 
               {event.is_active ? (
-                <div className="bg-gradient-to-br from-red-600 to-red-800 rounded-2xl p-6 shadow-lg shadow-red-900/20 text-white text-center">
-                  <h3 className="text-2xl font-bold mb-2">Secure Your Spot</h3>
-                  <p className="text-red-100 text-sm mb-6">
-                    Connect with serious investors and top brands. Register today.
-                  </p>
-                  
-                  <div className="space-y-3">
-                    <Link href="/register" className="block w-full py-3 px-4 bg-white text-red-700 font-bold rounded-xl hover:bg-gray-50 transform transition-all active:scale-95 shadow-md">
-                      Book Exhibition Booth
-                    </Link>
-                    <Link href="/register" className="block w-full py-3 px-4 bg-white/10 border border-red-200/30 text-white font-bold rounded-xl hover:bg-white/20 transform transition-all active:scale-95">
-                      Register as Visitor
-                    </Link>
+                  <div className="bg-gradient-to-br from-red-600 to-red-800 rounded-2xl p-6 shadow-lg shadow-red-900/20 text-white text-center">
+                    <h3 className="text-2xl font-bold mb-2">Secure Your Spot</h3>
+                    <p className="text-red-100 text-sm mb-6">
+                      Connect with serious investors and top brands. Register today.
+                    </p>
+                    
+                    <div className="space-y-3">
+                      <a href={`http://localhost:3000/book-your-slot?event_id=${event.id}`} className="block w-full py-3 px-4 bg-white text-red-700 font-bold rounded-xl hover:bg-gray-50 transform transition-all active:scale-95 shadow-md">
+                        Book Exhibition Booth
+                      </a>
+                      <Link href={`/register?type=visitor&event=${encodeURIComponent(event.title)}`} className="block w-full py-3 px-4 bg-white/10 border border-red-200/30 text-white font-bold rounded-xl hover:bg-white/20 transform transition-all active:scale-95">
+                        Register as Visitor
+                      </Link>
+                    </div>
                   </div>
-                </div>
               ) : (
                 <div className="bg-gray-800 rounded-2xl p-6 shadow-md text-center text-white">
                   <h3 className="text-2xl font-bold mb-2">Event Concluded</h3>
