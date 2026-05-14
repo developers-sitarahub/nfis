@@ -2,9 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, CheckCircle, Info, ChevronRight, ChevronLeft, Image as ImageIcon, UploadCloud } from 'lucide-react';
-import Link from 'next/link';
-import { authFetch } from '@/lib/authFetch';
+import { Save, CheckCircle, Info, ChevronRight, ChevronLeft, Image as ImageIcon, UploadCloud } from 'lucide-react';
 
 const PRODUCT_CATEGORIES_BY_INDUSTRY: Record<string, string[]> = {
   'QSR': ['Fast Food', 'Cafe & Bakery', 'Cloud Kitchen', 'Ice Cream & Desserts', 'Beverages', 'Fine Dining', 'Other Food'],
@@ -21,8 +19,7 @@ const PRODUCT_CATEGORIES_BY_INDUSTRY: Record<string, string[]> = {
   'Finance & Banking': ['NBFCs', 'Investment Services', 'Loan Hubs', 'Financial Consulting', 'Digital Banking']
 };
 
-export default function AddFranchiseForm() {
-  const router = useRouter();
+export default function FranchisorAddFormSecure({ initialEmail, secureToken }: { initialEmail: string, secureToken: string }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -38,7 +35,7 @@ export default function AddFranchiseForm() {
     // Contact Details
     contactPersonName: '',
     designation: '',
-    emailAddress: '',
+    emailAddress: initialEmail, // Locked to verification value
     contactNumber: '',
     websiteUrl: '',
     // Investment Range
@@ -145,6 +142,7 @@ export default function AddFranchiseForm() {
         val = val.replace(/\D/g, '').substring(0, 10);
         setFormData(prev => ({ ...prev, [name]: '+91 ' + val }));
       } else if (name === 'emailAddress') {
+        // Keep this locked behavior just in case but input is readOnly
         setFormData(prev => ({ ...prev, [name]: value.toLowerCase().replace(/\s/g, '') }));
       } else {
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -215,20 +213,16 @@ export default function AddFranchiseForm() {
 
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
       
-      // We do not set Content-Type header so browser sets multipart/form-data with boundary
       const res = await fetch(`${API_URL}/api/franchisor-registrations/`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          'X-Secure-Token': secureToken // track originating token
         },
         body: payload
       });
 
       if (res.ok) {
         setSuccess(true);
-        setTimeout(() => {
-          router.push('/dashboard/franchisor'); // Back to dashboard
-        }, 2000);
       } else {
         const data = await res.json();
         setError(`Failed to save: ${JSON.stringify(data)}`);
@@ -242,13 +236,29 @@ export default function AddFranchiseForm() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6 animate-in fade-in zoom-in duration-500">
+      <div className="min-h-[60vh] flex items-center justify-center p-6 animate-in fade-in zoom-in duration-500">
         <div className="bg-white rounded-[2rem] p-10 shadow-2xl max-w-md w-full text-center border border-gray-100">
           <CheckCircle size={70} className="text-green-500 mx-auto mb-6 drop-shadow-md" />
-          <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Saved Successfully!</h2>
-          <p className="text-gray-500 font-medium mb-8">The franchisor profile has been fully onboarded and is now live.</p>
-          <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-             <div className="h-full bg-green-500 animate-[progress_2s_ease-in-out]"></div>
+          <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Profile Created Successfully!</h2>
+          <p className="text-gray-500 font-medium mb-6">Your profile data has been safely submitted and linked. A confirmation email has been sent to your registered email address.</p>
+          
+          <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 mb-6 text-left">
+            <h3 className="font-bold text-gray-900 mb-2">Want to access your account?</h3>
+            <p className="text-sm text-gray-500 mb-4">Set up a password to track your profile, update details, and manage leads directly.</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => window.location.href = '/register'} 
+                className="flex-1 px-4 py-3 bg-black hover:bg-gray-800 text-white font-bold text-sm rounded-xl transition-all shadow-md active:scale-95 text-center"
+              >
+                Yes, Create
+              </button>
+              <button 
+                onClick={() => window.location.href = '/'} 
+                className="flex-1 px-4 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-sm rounded-xl transition-all active:scale-95 text-center"
+              >
+                No, Thanks
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -256,11 +266,8 @@ export default function AddFranchiseForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 py-10 px-4 sm:px-6 flex flex-col items-center">
+    <div className="py-4 px-4 sm:px-6 flex flex-col items-center">
       <div className="max-w-3xl w-full">
-        <Link href="/executive/dashboard" className="inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-gray-900 mb-8 transition-colors">
-          <ArrowLeft size={16} /> Back to Dashboard
-        </Link>
         
         <div className="mb-8">
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">Franchisor Onboarding</h1>
@@ -373,9 +380,8 @@ export default function AddFranchiseForm() {
                       <input type="text" name="designation" value={formData.designation} onChange={handleChange} placeholder="e.g. CEO, Franchise Head" className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-gray-200 focus:bg-white transition-all font-semibold outline-none" />
                     </div>
                     <div>
-                      <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Email Address <span className="text-red-500">*</span></label>
-                      <input required type="email" name="emailAddress" value={formData.emailAddress} onChange={handleChange} onBlur={handleBlur} placeholder="e.g. hello@brand.com" spellCheck={false} className={`w-full px-5 py-4 bg-gray-50 border ${touched.emailAddress && errors.emailAddress ? 'border-red-500' : 'border-gray-200'} rounded-2xl focus:ring-4 focus:ring-gray-200 focus:bg-white transition-all font-semibold outline-none`} />
-                      {touched.emailAddress && errors.emailAddress && <p className="mt-1 text-[10px] text-red-500 font-bold">{errors.emailAddress}</p>}
+                      <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Email Address (Secure Locked)</label>
+                      <input readOnly type="email" name="emailAddress" value={formData.emailAddress} className={`w-full px-5 py-4 bg-gray-100 border border-gray-200 text-gray-500 cursor-not-allowed rounded-2xl font-semibold outline-none`} />
                     </div>
                     <div>
                       <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Phone Number <span className="text-red-500">*</span></label>

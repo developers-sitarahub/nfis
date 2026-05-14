@@ -1,12 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, CheckCircle, Info, UploadCloud, Image as ImageIcon } from 'lucide-react';
-import Link from 'next/link';
+import { Save, CheckCircle, Info, UploadCloud, Image as ImageIcon } from 'lucide-react';
 
-export default function AddInvestorForm() {
-  const router = useRouter();
+export default function InvestorAddFormSecure({ initialEmail, secureToken }: { initialEmail: string, secureToken: string }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -14,7 +11,7 @@ export default function AddInvestorForm() {
   const [formData, setFormData] = useState({
     fullName: '',
     firmName: '',
-    email: '',
+    email: initialEmail, // Pre-locked
     phone: '+91 ',
     websiteUrl: '',
     budget: '',
@@ -91,8 +88,8 @@ export default function AddInvestorForm() {
       const payload = new FormData();
       payload.append('full_name', formData.fullName);
       payload.append('firm_name', formData.firmName);
-      payload.append('email', formData.email || `info@${formData.fullName.toLowerCase().replace(/\s+/g, '')}.com`);
-      payload.append('phone_number', formData.phone || "0000000000");
+      payload.append('email', formData.email);
+      payload.append('phone_number', formData.phone);
       if (formData.websiteUrl) payload.append('website_url', formData.websiteUrl);
       payload.append('investment_budget', formData.budget);
       payload.append('interested_sector', formData.sector);
@@ -109,16 +106,13 @@ export default function AddInvestorForm() {
       const res = await fetch(`${API_URL}/api/investor-registrations/`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+           'X-Secure-Token': secureToken
         },
         body: payload
       });
 
       if (res.ok) {
         setSuccess(true);
-        setTimeout(() => {
-          router.push('/executive/dashboard');
-        }, 2000);
       } else {
         const data = await res.json();
         setError(`Failed to save: ${JSON.stringify(data)}`);
@@ -132,26 +126,42 @@ export default function AddInvestorForm() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+      <div className="min-h-[60vh] flex items-center justify-center p-6">
         <div className="bg-white rounded-3xl p-10 shadow-2xl max-w-md w-full text-center border border-gray-100">
           <CheckCircle size={60} className="text-emerald-500 mx-auto mb-6" />
-          <h2 className="text-3xl font-black text-gray-900 mb-4">Saved Successfully!</h2>
-          <p className="text-gray-500 font-medium mb-8">The investor lead has been successfully onboarded.</p>
+          <h2 className="text-3xl font-black text-gray-900 mb-4">Profile Created Successfully!</h2>
+          <p className="text-gray-500 font-medium mb-6">Your details have been shared securely. A confirmation email has been sent to your registered email address.</p>
+          
+          <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 mb-6 text-left">
+            <h3 className="font-bold text-gray-900 mb-2">Want to access your account?</h3>
+            <p className="text-sm text-gray-500 mb-4">Set up a password to track your profile, update details, and manage leads directly.</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => window.location.href = '/register'} 
+                className="flex-1 px-4 py-3 bg-black hover:bg-gray-800 text-white font-bold text-sm rounded-xl transition-all shadow-md active:scale-95 text-center"
+              >
+                Yes, Create
+              </button>
+              <button 
+                onClick={() => window.location.href = '/'} 
+                className="flex-1 px-4 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-sm rounded-xl transition-all active:scale-95 text-center"
+              >
+                No, Thanks
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 py-12 px-4 sm:px-6">
+    <div className="py-4 px-4 sm:px-6">
       <div className="max-w-3xl mx-auto">
-        <Link href="/executive/dashboard" className="inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-gray-900 mb-8 transition-colors">
-          <ArrowLeft size={16} /> Back to Dashboard
-        </Link>
         
         <div className="mb-8 border-b border-gray-200 pb-8">
           <h1 className="text-4xl font-black text-gray-900 tracking-tight">Add Investor Lead</h1>
-          <p className="text-gray-500 font-medium mt-2">Executive dashboard to register a new investor profile.</p>
+          <p className="text-gray-500 font-medium mt-2">Secure direct pipeline verification form.</p>
         </div>
 
         {error && (
@@ -207,8 +217,8 @@ export default function AddInvestorForm() {
                 <input required type="text" name="firmName" value={formData.firmName} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white font-semibold" placeholder="e.g. Acme Capital" />
               </div>
               <div>
-                <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Email Address <span className="text-red-500">*</span></label>
-                <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white font-semibold" placeholder="john@example.com" />
+                <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Email Address (Secure Locked)</label>
+                <input readOnly type="email" name="email" value={formData.email} className="w-full px-4 py-3 bg-gray-100 border border-gray-200 text-gray-500 cursor-not-allowed rounded-xl font-semibold" />
               </div>
               <div>
                 <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Phone Number <span className="text-red-500">*</span></label>
@@ -287,7 +297,7 @@ export default function AddInvestorForm() {
                 loading || !isFormValid ? 'opacity-50 cursor-not-allowed translate-y-0' : 'hover:bg-black hover:-translate-y-1'
               }`}
             >
-              {loading ? 'Saving...' : <><Save size={18} /> Save Lead</>}
+              {loading ? 'Saving...' : <><Save size={18} /> Submit Registration</>}
             </button>
           </div>
         </form>

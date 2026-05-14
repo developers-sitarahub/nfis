@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { LogOut, Plus, Users, Building, ShieldCheck, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-toastify";
+import { authFetch } from "@/lib/authFetch";
+import { Share2, X, Mail, Send } from "lucide-react";
 
 export default function ExecutiveDashboard() {
   const router = useRouter();
@@ -21,10 +23,54 @@ export default function ExecutiveDashboard() {
     if (name) setUserName(name);
   }, [router]);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<"franchisor" | "investor">("franchisor");
+  const [targetEmail, setTargetEmail] = useState("");
+  const [isSending, setIsSending] = useState(false);
+
   const handleLogout = () => {
     localStorage.clear();
     toast.info("Logged out successfully");
     router.push("/login");
+  };
+
+  const openShareModal = (type: "franchisor" | "investor") => {
+    setModalType(type);
+    setTargetEmail("");
+    setIsModalOpen(true);
+  };
+
+  const handleGenerateLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!targetEmail.includes('@')) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+    
+    setIsSending(true);
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const res = await authFetch(`${API_URL}/api/secure-form/generate/`, {
+        method: 'POST',
+        body: JSON.stringify({
+          email: targetEmail,
+          form_type: modalType
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        toast.success("Secure invite sent successfully!");
+        setIsModalOpen(false);
+      } else {
+        const err = await res.json();
+        toast.error(err.detail || "Failed to generate secure link.");
+      }
+    } catch (error) {
+      toast.error("Connection failure. Please try again.");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -80,49 +126,121 @@ export default function ExecutiveDashboard() {
         <div className="grid md:grid-cols-2 gap-6">
           
           {/* Add Franchisor */}
-          <Link href="/executive/franchise/add" className="group block bg-white rounded-3xl p-8 border border-gray-100 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all duration-300 relative overflow-hidden">
+          <div className="group bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all duration-300 relative overflow-hidden flex flex-col">
              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-full opacity-50 group-hover:scale-110 transition-transform duration-500"></div>
              
-             <div className="relative z-10 flex flex-col h-full">
+             <div className="relative z-10 p-8 flex flex-col flex-1">
                <div className="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
                  <Building size={28} />
                </div>
-               <h3 className="text-2xl font-black text-gray-900 mb-3">Onboard Franchisor</h3>
+               <h3 className="text-2xl font-black text-gray-900 mb-3">Franchisor Onboarding</h3>
                <p className="text-gray-500 font-medium mb-8 flex-1">
-                 Add a new verified franchise profile to the system. Fill out investment specifics, space requirements, and support details.
+                 Add a new verified franchise profile directly, or generate a 1-hour secure self-fill link for remote brands.
                </p>
                
-               <div className="flex items-center gap-2 text-indigo-600 font-bold group-hover:gap-4 transition-all uppercase tracking-wide text-sm">
-                 <Plus size={18} />
-                 Begin Onboarding
-                 <ChevronRight size={18} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+               <div className="flex flex-col sm:flex-row gap-3 mt-auto">
+                 <Link href="/executive/franchise/add" className="flex items-center justify-center gap-2 flex-1 bg-indigo-600 text-white font-bold px-5 py-3 rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/20 text-sm uppercase tracking-wider">
+                   <Plus size={18} /> Onboard Directly
+                 </Link>
+                 <button onClick={() => openShareModal("franchisor")} className="flex items-center justify-center gap-2 bg-white border border-indigo-200 text-indigo-600 font-bold px-5 py-3 rounded-xl hover:bg-indigo-50 transition-colors text-sm uppercase tracking-wider">
+                   <Share2 size={16} /> Share Link
+                 </button>
                </div>
              </div>
-          </Link>
+          </div>
 
           {/* Add Investor */}
-          <Link href="/executive/investors/add" className="group block bg-white rounded-3xl p-8 border border-gray-100 shadow-sm hover:shadow-xl hover:emerald-100 transition-all duration-300 relative overflow-hidden">
+          <div className="group bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-emerald-100 transition-all duration-300 relative overflow-hidden flex flex-col">
              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-bl-full opacity-50 group-hover:scale-110 transition-transform duration-500"></div>
              
-             <div className="relative z-10 flex flex-col h-full">
+             <div className="relative z-10 p-8 flex flex-col flex-1">
                <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
                  <Users size={28} />
                </div>
-               <h3 className="text-2xl font-black text-gray-900 mb-3">Add Investor Lead</h3>
+               <h3 className="text-2xl font-black text-gray-900 mb-3">Investor Leads</h3>
                <p className="text-gray-500 font-medium mb-8 flex-1">
-                 Register a high-network individual or firm into the database. Specify their budget, operating sectors, and timeline.
+                 Register an investor into the pipeline yourself, or dispatch a secure one-time setup form directly to their email.
                </p>
                
-               <div className="flex items-center gap-2 text-emerald-600 font-bold group-hover:gap-4 transition-all uppercase tracking-wide text-sm">
-                 <Plus size={18} />
-                 Register Lead
-                 <ChevronRight size={18} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+               <div className="flex flex-col sm:flex-row gap-3 mt-auto">
+                 <Link href="/executive/investors/add" className="flex items-center justify-center gap-2 flex-1 bg-emerald-600 text-white font-bold px-5 py-3 rounded-xl hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 text-sm uppercase tracking-wider">
+                   <Plus size={18} /> Register Lead
+                 </Link>
+                 <button onClick={() => openShareModal("investor")} className="flex items-center justify-center gap-2 bg-white border border-emerald-200 text-emerald-600 font-bold px-5 py-3 rounded-xl hover:bg-emerald-50 transition-colors text-sm uppercase tracking-wider">
+                   <Share2 size={16} /> Share Link
+                 </button>
                </div>
              </div>
-          </Link>
+          </div>
 
         </div>
       </main>
+
+      {/* Share Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden border border-gray-100 animate-in slide-in-from-bottom-8 zoom-in-95 duration-300">
+            <div className={`p-6 text-white flex items-center justify-between ${modalType === "franchisor" ? 'bg-indigo-600' : 'bg-emerald-600'}`}>
+              <div className="flex items-center gap-3">
+                <Share2 size={20} />
+                <h3 className="text-lg font-black uppercase tracking-wider">Secure Form Link</h3>
+              </div>
+              <button onClick={() => setIsModalOpen(false)} className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/40 transition-colors text-white">
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleGenerateLink} className="p-8">
+              <div className="mb-6">
+                <p className="text-slate-600 font-medium text-sm leading-relaxed mb-4">
+                  This generates an <strong>encrypted, single-recipient form link</strong> tied to the email address. It expires strictly in <strong>24 hours</strong>.
+                </p>
+                
+                <div className="bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 mb-5 flex items-center justify-between">
+                  <span className="text-xs text-slate-500 font-bold uppercase tracking-widest">Type</span>
+                  <span className={`text-xs font-black uppercase px-3 py-1 rounded-full ${modalType === "franchisor" ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                    {modalType}
+                  </span>
+                </div>
+
+                <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Recipient Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                  <input 
+                    required
+                    type="email"
+                    placeholder="partner@example.com"
+                    value={targetEmail}
+                    onChange={(e) => setTargetEmail(e.target.value)}
+                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none font-semibold transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 mt-8">
+                <button 
+                  type="button" 
+                  onClick={() => setIsModalOpen(false)} 
+                  className="flex-1 py-3 font-bold text-slate-600 rounded-xl hover:bg-slate-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  disabled={isSending}
+                  type="submit" 
+                  className={`flex-[2] py-3.5 text-white font-black uppercase tracking-widest text-xs rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 ${
+                    modalType === "franchisor" 
+                      ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/20' 
+                      : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20'
+                  }`}
+                >
+                  {isSending ? 'Generating...' : <><Send size={14} /> Generate & Send</>}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

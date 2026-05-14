@@ -18,6 +18,7 @@ export function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userData, setUserData] = useState({
     name: "",
@@ -127,6 +128,9 @@ export function Navbar() {
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
   ];
+
+  // Hide Navbar on secure onboarding pages
+  if (pathname?.startsWith('/secure-onboard')) return null;
 
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm relative">
