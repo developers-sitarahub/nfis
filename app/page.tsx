@@ -29,49 +29,72 @@ export default async function Page() {
   let initialExhibitions: any[] = [];
 
   try {
-    // Fetch Franchises
-    const franchiseRes = await fetch(`${API_URL}/api/exhibitor-registrations/`, {
+    const NFIS_PLATFORMS = 'nfis,NFIS,nfis.in';
+    const franchisorRes = await fetch(`${API_URL}/api/franchisor-registrations/?source_platform=${NFIS_PLATFORMS}`, {
       next: { revalidate: 30 }
     });
 
-    if (franchiseRes.ok) {
-      const data = await franchiseRes.json();
-      const results = data.results || data;
-      initialFranchises = (Array.isArray(results) ? results : []).slice(0, 3).map((item: any) => {
+    let franchisors: any[] = [];
+
+    if (franchisorRes.ok) {
+      const data = await franchisorRes.json();
+      franchisors = data.results || data;
+    }
+
+    const allItems = [
+      ...franchisors.map(f => ({ ...f, _type: 'franchisor' }))
+    ];
+
+    initialFranchises = allItems
+      .filter((item: any) => item.status === 'contacted' || item.status === 'paid' || item.status === 'verified')
+      .slice(0, 6)
+      .map((item: any) => {
         const investmentStr = item.investment_required || '';
-        const minMatch = investmentStr.split('-')[0]?.match(/([\d.]+)\s*(K|Lakh|Crore)/i);
-        const maxMatch = investmentStr.split('-')[1]?.match(/([\d.]+)\s*(K|Lakh|Crore)/i);
+        const minMatch = investmentStr.split('-')[0]?.match(/([\d.]+)\s*(K|Lakh|Lakhs|Crore|Crores)/i);
+        const maxMatch = investmentStr.split('-')[1]?.match(/([\d.]+)\s*(K|Lakh|Lakhs|Crore|Crores)/i);
 
         const parseVal = (match: any) => {
           if (!match) return 0;
           let val = parseFloat(match[1]);
           const unit = (match[2] || '').toLowerCase();
           if (unit === 'k') val *= 1000;
-          else if (unit === 'lakh') val *= 100000;
-          else if (unit === 'crore') val *= 10000000;
+          else if (unit === 'lakh' || unit === 'lakhs') val *= 100000;
+          else if (unit === 'crore' || unit === 'crores') val *= 10000000;
           return val;
         };
 
         const minInvest = parseVal(minMatch);
         const maxInvest = parseVal(maxMatch) || minInvest * 1.5;
 
+        let cities: string[] = [];
+        if (item.cities) {
+          cities = item.cities.split(',').map((c: string) => c.trim()).filter(Boolean);
+        } else if (item.event_location) {
+          cities = [item.event_location];
+        }
+
         return {
-          id: item.id.toString(),
+          id: `${item._type}-${item.id}`,
+          brandName: item.company_name || 'Upcoming Franchise',
           name: item.company_name || 'Upcoming Franchise',
-          categories: (item.industry || 'General').split(/[;,]/).map((s: string) => s.trim()).filter(Boolean),
-          investmentRange: { min: minInvest, max: maxInvest },
-          description: item.about || '',
-          shortDescription: item.product_category || '',
-          roi: item.roi || '18-25',
-          yearsInBusiness: Number(item.founded_year) ? new Date().getFullYear() - Number(item.founded_year) : 5,
+          logo: item.logo || null,
+          category: (item.industry || item.product_category || 'General').split(/[;,]/)[0].trim(),
+          productCategory: item.product_category || '',
+          categories: (item.industry || item.product_category || 'General').split(/[;,]/).map((s: string) => s.trim()).filter(Boolean),
+          description: item.about || item.product_category || '',
+          shortDescription: item.product_category || item.about || '',
+          investmentRange: item.investment_required || (minInvest ? `\u20B9${minInvest}` : 'TBD'),
+          investmentRangeValue: { min: minInvest, max: maxInvest || minInvest * 1.5 },
+          roiTime: item.roi || '12–18 months',
+          roi: item.roi || '',
+          totalOutlets: Number(item.units_operating) || 0,
           unitsOperating: Number(item.units_operating) || 0,
-          supportLevel: 'Comprehensive',
-          image: item.logo || '',
-          highlights: ['Proven Model', 'Training Included', 'Brand Support'],
-          verified: item.status === 'paid',
-        };
+          verified: true,
+          state: cities[0] || '',
+        } as any;
       });
-    }
+
+
 
     // Fetch Exhibitions
     const exhibitionRes = await fetch(`${API_URL}/api/events/`, {

@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, User, MapPin, Briefcase, IndianRupee, ShieldCheck, CheckCircle, Users } from 'lucide-react';
 import { notFound } from 'next/navigation';
+import RequestInfoButton from '@/components/RequestInfoButton';
 
 interface InvestorDetailPageProps {
   params: Promise<{ id: string }>;
@@ -55,10 +56,10 @@ export default async function InvestorDetailPage({ params }: InvestorDetailPageP
     id: item.id.toString(),
     name: item.full_name || item.firm_name || 'Strategic Investor',
     firmName: item.firm_name,
-    location: item.location || 'Pan India',
+    location: item.preferred_location || 'Pan India',
     investmentCapacity: item.investment_budget || item.investment_capacity || 'Not Specified',
     preferredIndustries: (item.interested_sector || '').split(',').map((s: string) => s.trim()).filter(Boolean),
-    experience: item.business_experience || 'Industry Professional',
+    experience: (item.business_experience || 'Industry Professional').replace(/\s*\d+\s*months?/, '').trim(),
     companiesFinanced: item.companies_financed || '0',
     about: item.about || '',
     image: item.logo || '',
@@ -74,55 +75,68 @@ export default async function InvestorDetailPage({ params }: InvestorDetailPageP
           Back to Capital Network
         </Link>
 
-        {/* Header Header */}
-        <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden mb-8 shadow-xl">
-          <div className="relative w-full h-80 overflow-hidden bg-gray-50 flex items-center justify-center">
-            {investor.image ? (
-              <Image
-                src={investor.image}
-                alt={investor.name}
-                fill
-                className="object-cover"
-                priority
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center w-full h-full bg-gradient-to-br from-blue-50 to-blue-100">
-                <User size={100} className="text-blue-600/10 mb-4" />
-                <p className="text-sm font-black uppercase tracking-[0.4em] text-blue-600/20">NFIS Investor</p>
-              </div>
-            )}
-            
-            {investor.verified && (
-              <div className="absolute top-6 left-6 bg-blue-600 text-white px-4 py-1.5 rounded-xl shadow-2xl border-2 border-white/20 z-10 flex items-center gap-2">
-                <ShieldCheck size={18} />
-                <span className="text-xs font-black uppercase tracking-widest text-white">Verified Principal</span>
-              </div>
-            )}
-          </div>
+        {/* Header Section */}
+        <div className="bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden mb-8 shadow-2xl p-8 md:p-12 relative">
+          {/* Verified Badge - Prominent positioning */}
+          {investor.verified && (
+            <div className="absolute right-0 top-0 bg-blue-600 text-white px-6 py-4 rounded-bl-[2.5rem] shadow-xl z-20 flex items-center gap-2.5 animate-in fade-in slide-in-from-top-6 duration-700">
+              <ShieldCheck size={20} className="shrink-0" />
+              <span className="text-xs font-black uppercase tracking-[0.2em] leading-none">Verified Partner</span>
+            </div>
+          )}
+          <div className="absolute top-0 right-0 p-12 w-64 h-64 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-bl-[100%] -z-0 opacity-50 blur-3xl"></div>
+          
+          <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-12">
+            {/* Logo/Image Container */}
+            <div className="relative w-32 h-32 md:w-48 md:h-48 rounded-[2rem] bg-white border border-gray-100 shadow-xl shrink-0 flex items-center justify-center overflow-hidden group">
+              {investor.image ? (
+                <img 
+                  src={investor.image} 
+                  alt={investor.name} 
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+                  <User size={64} className="text-blue-200" />
+                </div>
+              )}
+            </div>
 
-          <div className="p-10">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-              <div>
-                 <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">
-                    {investor.firmName || investor.name}
-                 </h1>
-                 {investor.firmName && (
-                   <p className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-4">{investor.name}</p>
-                 )}
-                 <div className="flex items-center gap-4 text-gray-500">
-                   <div className="flex items-center gap-2">
-                     <MapPin size={18} className="text-blue-600" />
-                     <span className="text-sm font-bold uppercase tracking-widest">{investor.location}</span>
-                   </div>
-                 </div>
+            {/* Content Section */}
+            <div className="flex-1 text-center md:text-left">
+              <div className="mb-6">
+                <h1 className="text-4xl md:text-6xl font-black text-gray-900 tracking-tighter leading-tight mb-2">
+                  {investor.firmName || investor.name}
+                </h1>
+                {investor.firmName && (
+                  <p className="text-sm md:text-lg font-bold text-blue-600 uppercase tracking-[0.2em]">{investor.name}</p>
+                )}
               </div>
-              
-              <div className="flex flex-wrap gap-2">
-                {investor.preferredIndustries.map((ind: string) => (
-                  <span key={ind} className="px-4 py-2 bg-blue-50 text-blue-700 text-xs font-black rounded-xl border border-blue-100 uppercase tracking-tighter shadow-sm">
-                    {ind}
-                  </span>
-                ))}
+
+              <div className="flex flex-col md:flex-row md:items-center gap-6 md:gap-10 mb-8">
+                <div className="flex items-center justify-center md:justify-start gap-2 text-gray-500">
+                  <MapPin size={20} className="text-blue-600" />
+                  <span className="text-sm font-black uppercase tracking-widest">{investor.location}</span>
+                </div>
+                
+                <div className="flex flex-wrap justify-center md:justify-start gap-2">
+                  {investor.preferredIndustries.map((ind: string) => (
+                    <span key={ind} className="px-4 py-2 bg-blue-50 text-blue-600 text-[10px] font-black rounded-full border border-blue-100 uppercase tracking-widest shadow-sm">
+                      {ind}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap justify-center md:justify-start gap-8 border-t border-gray-50 pt-8">
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Investment Capacity</p>
+                  <p className="text-xl font-black text-gray-900">{investor.investmentCapacity}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Professional Experience</p>
+                  <p className="text-xl font-black text-gray-900">{investor.experience}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -138,28 +152,28 @@ export default async function InvestorDetailPage({ params }: InvestorDetailPageP
                   Investment Profile
                 </h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                   <div className="flex items-center gap-5">
+                <div className="flex flex-col md:flex-row flex-wrap items-start gap-10 md:gap-x-16 md:gap-y-8">
+                   <div className="flex items-center gap-4 min-w-fit">
                       <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-inner">
                          <IndianRupee className="text-blue-700" size={24} />
                       </div>
                       <div>
                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Portfolio Capacity</p>
-                         <p className="text-lg font-black text-gray-900 tracking-tight">{investor.investmentCapacity}</p>
+                         <p className="text-lg font-black text-gray-900 tracking-tight whitespace-nowrap">{investor.investmentCapacity}</p>
                       </div>
                    </div>
                    
-                   <div className="flex items-center gap-5">
+                   <div className="flex items-center gap-4 min-w-fit">
                       <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-inner">
                          <Briefcase className="text-blue-700" size={24} />
                       </div>
                       <div>
                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Strategic Experience</p>
-                         <p className="text-lg font-black text-gray-900 tracking-tight">{investor.experience} Years</p>
+                         <p className="text-lg font-black text-gray-900 tracking-tight">{investor.experience}</p>
                       </div>
                    </div>
 
-                   <div className="flex items-center gap-5">
+                   <div className="flex items-center gap-4 min-w-fit">
                       <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-inner">
                          <Users className="text-blue-700" size={24} />
                       </div>
@@ -182,26 +196,7 @@ export default async function InvestorDetailPage({ params }: InvestorDetailPageP
                     </div>
                  </div>
 
-                 {/* Contact Information */}
-                 {(item.email || item.phone_number) && (
-                   <div className="pt-10 border-t border-gray-50">
-                      <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Verified Contact Details</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                         {item.email && (
-                           <div className="flex flex-col">
-                              <span className="text-[10px] font-black text-blue-600 uppercase mb-1">Direct Email</span>
-                              <span className="text-sm font-bold text-gray-900">{item.email}</span>
-                           </div>
-                         )}
-                         {item.phone_number && (
-                           <div className="flex flex-col">
-                              <span className="text-[10px] font-black text-blue-600 uppercase mb-1">Phone Number</span>
-                              <span className="text-sm font-bold text-gray-900">{item.phone_number}</span>
-                           </div>
-                         )}
-                      </div>
-                   </div>
-                 )}
+
                </div>
           </div>
 
@@ -214,12 +209,11 @@ export default async function InvestorDetailPage({ params }: InvestorDetailPageP
                 <p className="text-sm text-gray-400 mb-8 relative z-10 font-bold">Connect directly with this principal investor to discuss strategic partnership opportunities.</p>
                 
                 <div className="space-y-4 relative z-10">
-                   <button className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-blue-600/20 transition-all active:scale-[0.98] flex items-center justify-center gap-3">
-                     Request Introduction
-                   </button>
-                   <Link href="/contact" className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 border border-white/10">
-                     Support Inquiries
-                   </Link>
+                   <RequestInfoButton 
+                     investorName={investor.name} 
+                     buttonText="Request Information"
+                     className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-blue-600/20 transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+                   />
                 </div>
                 
                 <div className="mt-10 pt-10 border-t border-white/10 relative z-10">
