@@ -6,6 +6,8 @@ import { Save, CheckCircle, Info, UploadCloud, Image as ImageIcon } from 'lucide
 export default function InvestorAddFormSecure({ initialEmail, secureToken }: { initialEmail: string, secureToken: string }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [setupLink, setSetupLink] = useState('');
+  const [registrationId, setRegistrationId] = useState<number | null>(null);
   const [error, setError] = useState('');
 
   const [formData, setFormData] = useState({
@@ -110,6 +112,13 @@ export default function InvestorAddFormSecure({ initialEmail, secureToken }: { i
       });
 
       if (res.ok) {
+        const data = await res.json();
+        if (data.id) {
+          setRegistrationId(data.id);
+        }
+        if (data.setup_link) {
+          setSetupLink(data.setup_link);
+        }
         setSuccess(true);
       } else {
         const data = await res.json();
@@ -122,26 +131,47 @@ export default function InvestorAddFormSecure({ initialEmail, secureToken }: { i
     }
   };
 
+  const handleFinalAction = async (isAccept: boolean) => {
+    if (registrationId) {
+      try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        await fetch(`${API_URL}/api/registrations/trigger-onboarding-email/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: registrationId, type: 'investor' })
+        });
+      } catch (e) {
+        console.error("Failed to trigger email", e);
+      }
+    }
+    
+    if (isAccept) {
+      window.location.href = '/login';
+    } else {
+      window.location.href = '/login';
+    }
+  };
+
   if (success) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center p-6">
         <div className="bg-white rounded-3xl p-10 shadow-2xl max-w-md w-full text-center border border-gray-100">
           <CheckCircle size={60} className="text-emerald-500 mx-auto mb-6" />
           <h2 className="text-3xl font-black text-gray-900 mb-4">Profile Created Successfully!</h2>
-          <p className="text-gray-500 font-medium mb-6">Your details have been shared securely. A confirmation email has been sent to your registered email address.</p>
+          <p className="text-gray-500 font-medium mb-6">Your details have been shared securely. A confirmation email will be sent once you choose an option below.</p>
           
           <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 mb-6 text-left">
             <h3 className="font-bold text-gray-900 mb-2">Want to access your account?</h3>
             <p className="text-sm text-gray-500 mb-4">Set up a password to track your profile, update details, and manage leads directly.</p>
             <div className="flex gap-3">
               <button 
-                onClick={() => window.location.href = '/register'} 
+                onClick={() => handleFinalAction(true)} 
                 className="flex-1 px-4 py-3 bg-black hover:bg-gray-800 text-white font-bold text-sm rounded-xl transition-all shadow-md active:scale-95 text-center"
               >
-                Yes, Create
+                Yes, Set Password
               </button>
               <button 
-                onClick={() => window.location.href = '/'} 
+                onClick={() => handleFinalAction(false)} 
                 className="flex-1 px-4 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-sm rounded-xl transition-all active:scale-95 text-center"
               >
                 No, Thanks

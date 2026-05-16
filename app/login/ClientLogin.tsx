@@ -127,6 +127,7 @@ export default function LoginPage() {
           toast.error(
             data.detail || "Login failed. Please check your credentials.",
           );
+          setIsLoading(false);
         }
       } else {
         // Not a JSON response, likely an HTML 404/500 page
@@ -134,11 +135,11 @@ export default function LoginPage() {
         toast.error(
           `Server error (${response.status}). Please verify your backend API URL and login endpoint.`,
         );
+        setIsLoading(false);
       }
     } catch (error) {
       console.error("Login attempt error:", error);
       toast.error("Network error occurred while trying to log in.");
-    } finally {
       setIsLoading(false);
     }
   };
